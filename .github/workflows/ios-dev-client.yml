@@ -1,0 +1,108 @@
+# Builds an UNSIGNED iOS development client on a GitHub-hosted Mac (no EAS).
+#
+# Run it from Actions → "iOS dev client (unsigned)" → Run workflow, then download
+# the artifact from the run summary:
+#   - device:    AnimeTracker-dev-unsigned.ipa. Sign and install it with your own
+#                Apple ID using a sideloading tool (Sideloadly, AltStore, etc.).
+#   - simulator: AnimeTracker-dev-simulator.zip. Unzip it, then
+#                `xcrun simctl install booted AnimeTracker.app`.
+# Then run `npx expo start --dev-client` and open the project from the dev client.
+name: iOS dev client (unsigned)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Build for a real device (unsigned .ipa) or the iOS Simulator
+        type: choice
+        options:
+          - device
+          - simulator
+        default: device
+
+concurrency:
+  group: ios-dev-client-${{ inputs.target }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # macOS 26 ships Xcode 26, which Liquid Glass (iOS 26 SDK) requires.
+    runs-on: macos-26
+    timeout-minutes: 90
+    env:
+      CONFIGURATION: Debug
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Generate native iOS project
+        run: npx expo prebuild --platform ios --clean --no-install
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v6
+        with:
+          path: |
+            ios/Pods
+            ~/Library/Caches/CocoaPods
+          key: pods-${{ runner.os }}-${{ hashFiles('package-lock.json', 'app.json') }}
+          restore-keys: pods-${{ runner.os }}-
+
+      - name: Install pods
+        working-directory: ios
+        run: pod install
+
+      - name: Build
+        working-directory: ios
+        run: |
+          WORKSPACE=$(ls -d *.xcworkspace | head -n1)
+          SCHEME="${WORKSPACE%.xcworkspace}"
+          echo "SCHEME=$SCHEME" >> "$GITHUB_ENV"
+          if [ "${{ inputs.target }}" = "simulator" ]; then
+            SDK=iphonesimulator; DEST="generic/platform=iOS Simulator"
+          else
+            SDK=iphoneos; DEST="generic/platform=iOS"
+          fi
+          echo "SDK=$SDK" >> "$GITHUB_ENV"
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration "$CONFIGURATION" \
+            -sdk "$SDK" \
+            -destination "$DEST" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            -quiet \
+            build
+
+      - name: Package
+        run: |
+          APP_DIR="ios/build/Build/Products/${CONFIGURATION}-${SDK}"
+          APP=$(ls -d "$APP_DIR"/*.app | head -n1)
+          mkdir -p dist
+          if [ "$SDK" = "iphoneos" ]; then
+            mkdir -p Payload
+            cp -R "$APP" Payload/
+            zip -qry "dist/${SCHEME}-dev-unsigned.ipa" Payload
+          else
+            (cd "$APP_DIR" && zip -qry "$GITHUB_WORKSPACE/dist/${SCHEME}-dev-simulator.zip" "$(basename "$APP")")
+          fi
+          ls -lh dist
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ios-dev-client-${{ inputs.target }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14

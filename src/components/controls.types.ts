@@ -1,0 +1,31 @@
+import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
+import type { ColorValue } from 'react-native';
+
+import type { ListStatus } from '@/constants/lists';
+
+/**
+ * Props shared by the platform implementations in `controls.tsx` (iOS, Liquid Glass)
+ * and `controls.android.tsx` (Material 3).
+ */
+export type ProgressProps = { value: number; total: number | null; color?: ColorValue };
+
+export type IncrementButtonProps = { onPress: () => void; accessibilityLabel: string };
+
+export type StatusPickerProps = {
+  value: ListStatus | undefined;
+  onChange: (status: ListStatus) => void;
+};
+
+export type EpisodeStepperProps = {
+  progress: number;
+  episodes: number | null;
+  onChange: (progress: number) => void;
+};
+
+export type ActionButtonProps = {
+  title: string;
+  sf?: SFSymbol;
+  md?: AndroidSymbol;
+  variant?: 'primary' | 'tonal' | 'destructive';
+  onPress: () => void;
+};

@@ -13,8 +13,8 @@ import type { MD3Theme } from 'react-native-paper';
 
 import type { AppTheme } from './types';
 
-// Blue pencil: the fallback seed when the device has no dynamic colour.
-const SEED_COLOR = '#2F6BD8';
+// Electric indigo: the fallback seed when the device has no dynamic colour.
+const SEED_COLOR = '#6C5CFF';
 
 export function useAppTheme(): AppTheme {
   const theme = useTheme<MD3Theme>();
@@ -22,6 +22,7 @@ export function useAppTheme(): AppTheme {
   return useMemo(
     () => ({
       dark: theme.dark,
+      canvas: c.background,
       colors: {
         background: c.background,
         surface: c.elevation.level1,

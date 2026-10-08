@@ -1,11 +1,12 @@
 import { useCallback, useState } from 'react';
-import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Chip } from '@/components/controls';
+import { ActionButton } from '@/components/controls';
+import { GenreTiles } from '@/components/genre-tiles';
 import { PosterCard, PosterSkeleton } from '@/components/poster-card';
 import { SectionHeader } from '@/components/shelf';
 import { EmptyState, ErrorState } from '@/components/states';
-import { type AnimeSummary, type BrowseOptions, GENRES, browseAnime, formatLabel } from '@/lib/anilist';
+import { type AnimeSummary, type BrowseOptions, browseAnime, formatLabel } from '@/lib/anilist';
 import { GRID_GAP, GRID_PADDING, useGrid } from '@/lib/use-grid';
 import { useDebouncedValue, useRequest } from '@/lib/use-request';
 import { useAppTheme } from '@/theme/theme';
@@ -40,21 +41,16 @@ export function SearchResults({ query }: { query: string }) {
 
   const header = (
     <View style={styles.header}>
-      {!q ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chips}>
-          <Chip label="Trending" selected={genre === null} onPress={() => setGenre(null)} />
-          {GENRES.map((g) => (
-            <Chip
-              key={g}
-              label={g}
-              selected={genre === g}
-              onPress={() => setGenre(genre === g ? null : g)}
-            />
-          ))}
-        </ScrollView>
+      {!q && !genre ? (
+        <>
+          <SectionHeader title="Browse by genre" />
+          <GenreTiles onPick={setGenre} />
+        </>
+      ) : null}
+      {!q && genre ? (
+        <View style={styles.chips}>
+          <ActionButton title={genre} sf="xmark" md="close" variant="tonal" onPress={() => setGenre(null)} />
+        </View>
       ) : null}
       {data?.length || loading ? <SectionHeader title={heading} /> : null}
     </View>
@@ -110,8 +106,8 @@ export function SearchResults({ query }: { query: string }) {
 const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingBottom: 32, gap: 20 },
   columns: { gap: GAP, paddingHorizontal: PADDING },
-  header: { gap: 16, paddingTop: 8 },
-  chips: { gap: 8, paddingHorizontal: PADDING },
+  header: { gap: 18, paddingTop: 8 },
+  chips: { flexDirection: 'row', paddingHorizontal: PADDING },
   skeletonGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

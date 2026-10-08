@@ -5,6 +5,8 @@
 import { isLiquidGlassAvailable } from 'expo-glass-effect';
 import type { NativeStackNavigationOptions } from 'expo-router';
 
+import { Fonts } from '@/theme/fonts';
+
 const liquidGlass = isLiquidGlassAvailable();
 
 export function useStackScreenOptions(): NativeStackNavigationOptions {
@@ -15,6 +17,8 @@ export function useStackScreenOptions(): NativeStackNavigationOptions {
     headerLargeTitleShadowVisible: false,
     headerLargeStyle: { backgroundColor: 'transparent' },
     headerBackButtonDisplayMode: 'minimal',
+    headerLargeTitleStyle: { fontFamily: Fonts.display },
+    headerTitleStyle: { fontFamily: Fonts.heading },
   };
 }
 

@@ -1,23 +1,26 @@
 /** Android sign-in: Material 3 outlined text fields and filled buttons. */
 import { useRef, useState } from 'react';
-import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Button, HelperText, Text, TextInput, useTheme, type MD3Theme } from 'react-native-paper';
 import type { TextInput as NativeTextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { FrameStrip } from '@/components/frames';
+import { PosterWall } from '@/components/poster-wall';
+import { Fonts } from '@/theme/fonts';
 import { useAuthForm } from '@/screens/use-auth-form';
 
 export function AuthScreen() {
   const { colors } = useTheme<MD3Theme>();
   const insets = useSafeAreaInsets();
   const form = useAuthForm();
+  const wallHeight = Math.round(useWindowDimensions().height * 0.6);
   const passwordRef = useRef<NativeTextInput>(null);
   const [showPassword, setShowPassword] = useState(false);
   const signUp = form.mode === 'sign-up';
 
   return (
     <KeyboardAvoidingView behavior="height" style={[styles.fill, { backgroundColor: colors.background }]}>
+      <PosterWall height={wallHeight} />
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[
@@ -25,10 +28,7 @@ export function AuthScreen() {
           { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 },
         ]}>
         <View style={styles.hero}>
-          <View style={styles.mark} importantForAccessibility="no-hide-descendants">
-            <FrameStrip progress={3} total={8} height={22} />
-          </View>
-          <Text variant="headlineMedium" style={styles.center}>
+          <Text variant="headlineMedium" style={[styles.center, styles.display]}>
             {signUp ? 'Create account' : 'Welcome back'}
           </Text>
           <Text variant="bodyLarge" style={[styles.center, { color: colors.onSurfaceVariant }]}>
@@ -105,10 +105,10 @@ export function AuthScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  content: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, gap: 12 },
+  content: { flexGrow: 1, justifyContent: 'flex-end', paddingHorizontal: 24, gap: 12 },
   hero: { alignItems: 'center', gap: 8, marginBottom: 16 },
   center: { textAlign: 'center' },
-  mark: { width: 176, marginBottom: 16 },
+  display: { fontFamily: Fonts.display, fontSize: 34, lineHeight: 40 },
   primary: { marginTop: 8 },
   buttonContent: { height: 48 },
 });

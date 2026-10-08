@@ -24,4 +24,9 @@ export type AppColors = {
   status: Record<ListStatus, ColorValue>;
 };
 
-export type AppTheme = { dark: boolean; colors: AppColors };
+export type AppTheme = {
+  dark: boolean;
+  colors: AppColors;
+  /** Concrete hex of `colors.background`, for artwork that fades into the page. */
+  canvas: string;
+};

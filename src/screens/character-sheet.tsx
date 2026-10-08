@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   card: { borderRadius: Platform.OS === 'ios' ? 14 : 20, borderCurve: 'continuous', paddingHorizontal: 16 },
   fact: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, paddingVertical: 12 },
   factValue: { flexShrink: 1, textAlign: 'right' },
-  numeric: { fontFamily: Fonts.numeral, fontSize: 18, fontVariant: ['tabular-nums'] },
+  numeric: { fontFamily: Fonts.display, fontSize: 18, fontVariant: ['tabular-nums'] },
   about: { gap: 10 },
   aboutTitle: { paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth * 2 },
   more: { marginTop: 8, fontWeight: '600' },

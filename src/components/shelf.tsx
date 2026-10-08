@@ -1,28 +1,29 @@
 import { type PropsWithChildren, useCallback } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { PosterCard, PosterSkeleton } from '@/components/poster-card';
+import { PosterCard, PosterSkeleton, RankedCard } from '@/components/poster-card';
 import { type AnimeSummary, type BrowseOptions, browseAnime, formatLabel } from '@/lib/anilist';
 import { useRequest } from '@/lib/use-request';
+import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
 import { Type } from '@/theme/type';
 
-const CARD_WIDTH = 124;
+const CARD_WIDTH = 140;
 const GAP = 14;
 
 type Action = { label: string; onPress: () => void };
 
-/** Section heading on a sheet rule: title left, optional action right. */
+/** Bold section title with an optional action on the right. */
 export function SectionHeader({ title, action }: { title: string; action?: Action }) {
   const { colors } = useAppTheme();
   return (
-    <View style={[styles.header, { borderBottomColor: colors.rule as string }]}>
-      <Text style={[Type.title3, { color: colors.text }]} accessibilityRole="header">
+    <View style={styles.header}>
+      <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
         {title}
       </Text>
       {action ? (
         <Pressable onPress={action.onPress} hitSlop={12} accessibilityRole="button">
-          <Text style={[Type.subhead, { color: colors.primary }]}>{action.label}</Text>
+          <Text style={[Type.subhead, styles.action, { color: colors.primary }]}>{action.label}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -43,9 +44,10 @@ type PosterRowProps<T> = {
   renderCard: (item: T, width: number, index: number) => React.ReactElement;
   keyOf: (item: T) => number;
   width?: number;
+  gap?: number;
 };
 
-export function PosterRow<T>({ data, renderCard, keyOf, width = CARD_WIDTH }: PosterRowProps<T>) {
+export function PosterRow<T>({ data, renderCard, keyOf, width = CARD_WIDTH, gap = GAP }: PosterRowProps<T>) {
   return (
     <FlatList
       horizontal
@@ -53,11 +55,8 @@ export function PosterRow<T>({ data, renderCard, keyOf, width = CARD_WIDTH }: Po
       keyExtractor={(item) => String(keyOf(item))}
       renderItem={({ item, index }) => renderCard(item, width, index)}
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.row}
-      ItemSeparatorComponent={RowGap}
+      contentContainerStyle={[styles.row, { gap }]}
       decelerationRate="fast"
-      snapToInterval={width + GAP}
-      snapToAlignment="start"
     />
   );
 }
@@ -77,7 +76,7 @@ export function RemoteShelf({
   const { colors } = useAppTheme();
   const key = `browse:${JSON.stringify(query)}`;
   const fetcher = useCallback(
-    (signal: AbortSignal) => browseAnime({ perPage: 15, ...query }, signal),
+    (signal: AbortSignal) => browseAnime({ perPage: ranked ? 10 : 15, ...query }, signal),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [key]
   );
@@ -89,21 +88,26 @@ export function RemoteShelf({
         <PosterRow<AnimeSummary>
           data={data}
           keyOf={(a) => a.id}
-          renderCard={(a, w, i) => (
-            <PosterCard
-              anime={a}
-              width={w}
-              rank={ranked ? i + 1 : undefined}
-              subtitle={[formatLabel(a.format), a.averageScore ? `${(a.averageScore / 10).toFixed(1)}/10` : null]
-                .filter(Boolean)
-                .join(' · ')}
-            />
-          )}
+          width={ranked ? 120 : CARD_WIDTH}
+          gap={ranked ? 6 : GAP}
+          renderCard={(a, w, i) =>
+            ranked ? (
+              <RankedCard anime={a} rank={i + 1} width={w} />
+            ) : (
+              <PosterCard
+                anime={a}
+                width={w}
+                subtitle={[formatLabel(a.format), a.averageScore ? `${a.averageScore}%` : null]
+                  .filter(Boolean)
+                  .join(' · ')}
+              />
+            )
+          }
         />
       ) : error ? (
         <Pressable onPress={retry} style={styles.error} accessibilityRole="button">
           <Text style={[Type.subhead, { color: colors.textSecondary }]}>
-            Couldn&apos;t load this shelf. <Text style={{ color: colors.primary }}>Try again</Text>
+            Couldn&apos;t load this row. <Text style={{ color: colors.primary }}>Try again</Text>
           </Text>
         </Pressable>
       ) : (
@@ -117,20 +121,11 @@ export function RemoteShelf({
   );
 }
 
-function RowGap() {
-  return <View style={{ width: GAP }} />;
-}
-
 const styles = StyleSheet.create({
   shelf: { gap: 14 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    marginHorizontal: 20,
-    paddingBottom: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth * 2,
-  },
+  header: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginHorizontal: 20 },
+  title: { fontFamily: Fonts.display, fontSize: 24, letterSpacing: -0.6 },
+  action: { fontWeight: '600' },
   row: { paddingHorizontal: 20 },
   skeletons: { flexDirection: 'row', gap: GAP, overflow: 'hidden' },
   error: { paddingHorizontal: 20, paddingVertical: 24 },

@@ -1,207 +1,358 @@
 import { type Href, Link, router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  FlatList,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import Animated, {
+  FadeIn,
+  interpolate,
+  type SharedValue,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ActionButton, IncrementButton } from '@/components/controls';
-import { EpisodeReadout, FrameStrip } from '@/components/frames';
+import { IncrementButton } from '@/components/controls';
 import { Icon } from '@/components/icon';
 import { PlatformPressable } from '@/components/motion';
-import { Poster } from '@/components/poster';
-import { RemoteShelf, SectionHeader } from '@/components/shelf';
+import { Art } from '@/components/poster';
+import { PosterCard, WideCard } from '@/components/poster-card';
+import { EpisodeBar } from '@/components/progress';
+import { PosterRow, RemoteShelf, Shelf } from '@/components/shelf';
 import { useAnimeHref } from '@/components/tab-context';
 import type { ListStatus } from '@/constants/lists';
-import { currentSeason, describeAnime } from '@/lib/anilist';
+import { type AnimeSummary, browseAnime, currentSeason, formatLabel, pickSummary } from '@/lib/anilist';
+import { readableOn, showAccent, withAlpha } from '@/lib/color';
+import { useRequest } from '@/lib/use-request';
 import { type LibraryEntry, useLibrary } from '@/store/library';
 import { useUi } from '@/store/ui';
+import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
 import { Type } from '@/theme/type';
 
-const isIOS = Platform.OS === 'ios';
 const SEASON = currentSeason();
 const SEASON_LABEL = `${SEASON.season[0]}${SEASON.season.slice(1).toLowerCase()} ${SEASON.seasonYear}`;
+
+type HeroItem = { anime: AnimeSummary; entry?: LibraryEntry };
 
 function openLibrary(list: ListStatus) {
   useUi.getState().setLibraryList(list);
   router.navigate('/(library)' as Href);
 }
 
-function openSearch() {
-  router.navigate('/(search)' as Href);
-}
-
 export function HomeScreen() {
-  const { colors } = useAppTheme();
+  const { colors, canvas } = useAppTheme();
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const entries = useLibrary((s) => s.entries);
+  const heroHeight = Math.min(Math.round(height * 0.7), 640);
 
-  const { watching, wishlist } = useMemo(() => {
+  const fetchTrending = useCallback(
+    (signal: AbortSignal) => browseAnime({ sort: 'TRENDING_DESC', perPage: 8 }, signal),
+    []
+  );
+  const trending = useRequest('hero:trending', fetchTrending);
+
+  const { watching, wishlist, hero } = useMemo(() => {
     const all = Object.values(entries).sort((a, b) => b.updatedAt - a.updatedAt);
-    return {
-      watching: all.filter((e) => e.status === 'watching'),
-      wishlist: all.filter((e) => e.status === 'wishlist').reverse(),
-    };
-  }, [entries]);
+    const watchingList = all.filter((e) => e.status === 'watching');
+    const wishlistList = all.filter((e) => e.status === 'wishlist');
+    const mine: HeroItem[] = [
+      ...watchingList.filter((e) => e.episodes == null || e.progress < e.episodes),
+      ...wishlistList,
+    ]
+      .slice(0, 5)
+      .map((e) => ({ anime: e, entry: e }));
+    const fill = (trending.data ?? [])
+      .filter((a) => !entries[a.id])
+      .slice(0, Math.max(0, 6 - mine.length))
+      .map((a) => ({ anime: a }));
+    return { watching: watchingList, wishlist: wishlistList, hero: [...mine, ...fill] };
+  }, [entries, trending.data]);
 
-  const [pickIndex, setPickIndex] = useState(0);
-  const pick = wishlist.length ? wishlist[pickIndex % wishlist.length] : undefined;
-  const shuffle = () => {
-    if (wishlist.length < 2) return;
-    let next = pickIndex;
-    while (next % wishlist.length === pickIndex % wishlist.length) {
-      next = Math.floor(Math.random() * wishlist.length);
-    }
-    setPickIndex(next);
+  const [page, setPage] = useState(0);
+  const current = hero[Math.min(page, hero.length - 1)];
+  const glow = showAccent(current?.anime.coverColor, colors.primary as string);
+
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.set(e.contentOffset.y);
+  });
+
+  const onPage = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    setPage(Math.round(e.nativeEvent.contentOffset.x / width));
   };
 
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentInsetAdjustmentBehavior="automatic"
-      contentContainerStyle={styles.content}>
-      {watching.length > 0 ? (
-        <View style={styles.section}>
-          <SectionHeader
-            title="On the sheet"
-            action={watching.length > 6 ? { label: 'See All', onPress: () => openLibrary('watching') } : undefined}
-          />
-          <View style={[styles.group, { backgroundColor: colors.surface }]}>
-            {watching.slice(0, 6).map((e, i) => (
-              <SheetRow key={e.id} entry={e} first={i === 0} />
-            ))}
+    <View style={[styles.fill, { backgroundColor: colors.background }]}>
+      <Animated.View
+        key={glow}
+        entering={FadeIn.duration(600)}
+        pointerEvents="none"
+        style={[
+          styles.glow,
+          {
+            top: heroHeight * 0.55,
+            height: heroHeight,
+            experimental_backgroundImage: `linear-gradient(to bottom, ${withAlpha(glow, 0)} 0%, ${withAlpha(glow, 0.28)} 35%, ${withAlpha(canvas, 0)} 100%)`,
+          },
+        ]}
+      />
+      <Animated.ScrollView
+        style={styles.fill}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={{ paddingBottom: insets.bottom + 96 }}>
+        {hero.length ? (
+          <View style={{ height: heroHeight }}>
+            <FlatList
+              horizontal
+              pagingEnabled
+              data={hero}
+              keyExtractor={(h) => String(h.anime.id)}
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={onPage}
+              renderItem={({ item }) => (
+                <HeroSlide item={item} width={width} height={heroHeight} scrollY={scrollY} canvas={canvas} />
+              )}
+            />
+            {hero.length > 1 ? (
+              <View style={styles.dots} accessibilityElementsHidden>
+                {hero.map((h, i) => (
+                  <View
+                    key={h.anime.id}
+                    style={[
+                      styles.dot,
+                      { backgroundColor: i === page ? (colors.text as string) : (colors.fill as string) },
+                      i === page && styles.dotActive,
+                    ]}
+                  />
+                ))}
+              </View>
+            ) : null}
           </View>
+        ) : (
+          <View style={{ height: heroHeight * 0.6 }} />
+        )}
+
+        <View style={styles.rows}>
+          {watching.length > 0 ? (
+            <Shelf
+              title="Continue Watching"
+              action={watching.length > 4 ? { label: 'See All', onPress: () => openLibrary('watching') } : undefined}>
+              <PosterRow<LibraryEntry>
+                data={watching}
+                width={Math.min(300, width * 0.78)}
+                keyOf={(e) => e.id}
+                renderCard={(e, w) => <ContinueCard entry={e} width={w} />}
+              />
+            </Shelf>
+          ) : null}
+
+          {wishlist.length > 0 ? (
+            <Shelf title="Your Wishlist" action={{ label: 'See All', onPress: () => openLibrary('wishlist') }}>
+              <PosterRow<LibraryEntry>
+                data={wishlist}
+                keyOf={(e) => e.id}
+                renderCard={(e, w) => (
+                  <PosterCard
+                    anime={e}
+                    width={w}
+                    subtitle={[formatLabel(e.format), e.year].filter(Boolean).join(' · ')}
+                  />
+                )}
+              />
+            </Shelf>
+          ) : null}
+
+          <RemoteShelf title="Top 10 Today" query={{ sort: 'TRENDING_DESC' }} ranked />
+          <RemoteShelf title={`New in ${SEASON_LABEL}`} query={{ ...SEASON, sort: 'POPULARITY_DESC' }} />
+          <RemoteShelf title="Highest Rated" query={{ sort: 'SCORE_DESC' }} />
         </View>
-      ) : null}
+      </Animated.ScrollView>
 
-      {pick ? (
-        <View style={styles.section}>
-          <SectionHeader title="For tonight" action={{ label: 'Wishlist', onPress: () => openLibrary('wishlist') }} />
-          <PickRow entry={pick} onShuffle={wishlist.length > 1 ? shuffle : undefined} />
-        </View>
-      ) : null}
-
-      {watching.length === 0 && !pick ? (
-        <View style={[styles.empty, { backgroundColor: colors.surface }]}>
-          <FrameStrip progress={0} total={8} height={12} />
-          <Text style={[Type.title3, styles.emptyTitle, { color: colors.text }]}>Your sheet is blank</Text>
-          <Text style={[Type.subhead, styles.emptyBody, { color: colors.textSecondary }]}>
-            Add shows from Search. What you&apos;re watching appears here, one frame per episode.
-          </Text>
-          <ActionButton title="Find Anime" sf="magnifyingglass" md="search" variant="primary" onPress={openSearch} />
-        </View>
-      ) : null}
-
-      <RemoteShelf title="Trending now" query={{ sort: 'TRENDING_DESC' }} ranked />
-      <RemoteShelf title={SEASON_LABEL} query={{ ...SEASON, sort: 'POPULARITY_DESC' }} />
-      <RemoteShelf title="Top rated" query={{ sort: 'SCORE_DESC' }} ranked />
-    </ScrollView>
-  );
-}
-
-/** One show on the sheet: cover, title, readout, frame strip, and +1. */
-function SheetRow({ entry, first }: { entry: LibraryEntry; first: boolean }) {
-  const { colors } = useAppTheme();
-  const href = useAnimeHref();
-  const increment = useLibrary((s) => s.incrementProgress);
-  const done = entry.episodes != null && entry.progress >= entry.episodes;
-
-  return (
-    <View
-      style={[
-        styles.row,
-        !first && { borderTopColor: colors.rule as string, borderTopWidth: StyleSheet.hairlineWidth * 2 },
-      ]}>
-      <Link href={href(entry.id)} asChild>
-        <Pressable style={styles.rowMain} accessibilityRole="button" android_ripple={{ color: colors.fill as string }}>
-          <Poster uri={entry.coverUrl} color={entry.coverColor} width={48} />
-          <View style={styles.rowBody}>
-            <View style={styles.rowTop}>
-              <Text style={[Type.headline, styles.flex, { color: colors.text }]} numberOfLines={2}>
-                {entry.title}
-              </Text>
-              <EpisodeReadout progress={entry.progress} total={entry.episodes} size={16} />
-            </View>
-            <FrameStrip progress={entry.progress} total={entry.episodes} height={10} />
-          </View>
-        </Pressable>
+      <Link href="/account" asChild>
+        <PlatformPressable
+          haptic
+          accessibilityRole="button"
+          accessibilityLabel="Account"
+          style={[styles.account, { top: insets.top + 8 }]}>
+          <Icon sf="person.crop.circle.fill" md="account_circle" size={28} color="#FFFFFF" />
+        </PlatformPressable>
       </Link>
-      {done ? null : (
-        <IncrementButton
-          onPress={() => increment(entry.id)}
-          accessibilityLabel={`Mark episode ${entry.progress + 1} of ${entry.title} as watched`}
-        />
-      )}
     </View>
   );
 }
 
-function PickRow({ entry, onShuffle }: { entry: LibraryEntry; onShuffle?: () => void }) {
+function HeroSlide({
+  item,
+  width,
+  height,
+  scrollY,
+  canvas,
+}: {
+  item: HeroItem;
+  width: number;
+  height: number;
+  scrollY: SharedValue<number>;
+  canvas: string;
+}) {
   const { colors } = useAppTheme();
   const href = useAnimeHref();
+  const increment = useLibrary((s) => s.incrementProgress);
   const setStatus = useLibrary((s) => s.setStatus);
+  const { anime, entry } = item;
+  const accent = showAccent(anime.coverColor, colors.primary as string);
+  const onAccent = readableOn(accent);
+
+  // Art drifts at half speed on scroll and stretches when pulled down.
+  const parallax = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(scrollY.value, [-200, 0, height], [-100, 0, height * 0.45], 'clamp') },
+      { scale: interpolate(scrollY.value, [-200, 0], [1.3, 1], 'clamp') },
+    ],
+  }));
+
+  const watching = entry?.status === 'watching';
+  const nextEp = (entry?.progress ?? 0) + 1;
+  const action = watching
+    ? { label: `Log Episode ${nextEp}`, sf: 'checkmark' as const, md: 'check' as const, run: () => increment(anime.id) }
+    : entry?.status === 'wishlist'
+      ? {
+          label: 'Start Watching',
+          sf: 'play.fill' as const,
+          md: 'play_arrow' as const,
+          run: () => setStatus(entry, 'watching'),
+        }
+      : {
+          label: 'Add to Wishlist',
+          sf: 'plus' as const,
+          md: 'add' as const,
+          run: () => setStatus(pickSummary(anime), 'wishlist'),
+        };
+  const kicker = watching ? 'Continue watching' : entry?.status === 'wishlist' ? 'From your wishlist' : 'Trending now';
 
   return (
-    <View style={[styles.group, styles.pick, { backgroundColor: colors.surface }]}>
-      <Link href={href(entry.id)} asChild>
-        <PlatformPressable style={styles.pickMain} accessibilityRole="button" accessibilityLabel={entry.title}>
-          <Poster uri={entry.coverUrl} color={entry.coverColor} width={72} />
-          <View style={styles.rowBody}>
-            <Text style={[Type.headline, { color: colors.text }]} numberOfLines={2}>
-              {entry.title}
-            </Text>
-            <Text style={[Type.footnote, { color: colors.textSecondary }]} numberOfLines={1}>
-              {describeAnime(entry)}
-            </Text>
+    <View style={{ width, height, overflow: 'hidden' }}>
+      <Animated.View style={[StyleSheet.absoluteFill, parallax]}>
+        <Art uri={anime.coverUrl} color={anime.coverColor} style={StyleSheet.absoluteFill} contentPosition="top" />
+      </Animated.View>
+      <View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            experimental_backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 22%, ${withAlpha(canvas, 0)} 45%, ${withAlpha(canvas, 0.85)} 80%, ${canvas} 100%)`,
+          },
+        ]}
+      />
+      <View style={styles.heroBody}>
+        <Text style={[Type.footnote, styles.heroKicker, { color: accent }]}>{kicker}</Text>
+        <Link href={href(anime.id)} asChild>
+          <Text style={[styles.heroTitle, { color: colors.text }]} numberOfLines={2} accessibilityRole="link">
+            {anime.title}
+          </Text>
+        </Link>
+        <Text style={[Type.subhead, { color: colors.textSecondary }]} numberOfLines={1}>
+          {[
+            formatLabel(anime.format),
+            anime.year,
+            anime.episodes ? `${anime.episodes} episodes` : null,
+            anime.averageScore ? `${anime.averageScore}% rating` : null,
+          ]
+            .filter(Boolean)
+            .join('  ·  ')}
+        </Text>
+        {entry && watching ? (
+          <View style={styles.heroProgress}>
+            <EpisodeBar progress={entry.progress} total={entry.episodes} color={accent} height={5} />
           </View>
-        </PlatformPressable>
-      </Link>
-      <View style={styles.pickActions}>
-        <ActionButton
-          title="Start Watching"
-          sf="play.fill"
-          md="play_arrow"
-          variant="tonal"
-          onPress={() => setStatus(entry, 'watching')}
-        />
-        {onShuffle ? (
+        ) : null}
+        <View style={styles.heroActions}>
           <PlatformPressable
             haptic
-            onPress={onShuffle}
-            style={[styles.shuffle, { backgroundColor: colors.fill }]}
+            onPress={action.run}
             accessibilityRole="button"
-            accessibilityLabel="Suggest another show from your wishlist">
-            <Icon sf="shuffle" md="shuffle" size={18} color={colors.primary} />
+            style={[styles.primary, { backgroundColor: accent, boxShadow: `0 10px 30px ${withAlpha(accent, 0.45)}` }]}>
+            <Icon sf={action.sf} md={action.md} size={18} color={onAccent} />
+            <Text style={[styles.primaryLabel, { color: onAccent }]}>{action.label}</Text>
           </PlatformPressable>
-        ) : null}
+          <Link href={href(anime.id)} asChild>
+            <PlatformPressable
+              accessibilityRole="button"
+              accessibilityLabel={`Details for ${anime.title}`}
+              style={[styles.secondary, { backgroundColor: colors.fill }]}>
+              <Icon sf="info.circle" md="info" size={22} color={colors.text} />
+            </PlatformPressable>
+          </Link>
+        </View>
       </View>
     </View>
   );
 }
 
+function ContinueCard({ entry, width }: { entry: LibraryEntry; width: number }) {
+  const increment = useLibrary((s) => s.incrementProgress);
+  const done = entry.episodes != null && entry.progress >= entry.episodes;
+  return (
+    <WideCard
+      anime={entry}
+      width={width}
+      progress={entry.progress}
+      total={entry.episodes}
+      accessory={
+        done ? null : (
+          <IncrementButton
+            floating
+            onPress={() => increment(entry.id)}
+            accessibilityLabel={`Mark episode ${entry.progress + 1} of ${entry.title} as watched`}
+          />
+        )
+      }
+    />
+  );
+}
+
 const styles = StyleSheet.create({
-  content: { paddingTop: 8, paddingBottom: 40, gap: 32 },
-  section: { gap: 12 },
-  flex: { flex: 1 },
-  group: {
-    marginHorizontal: 16,
-    borderRadius: isIOS ? 14 : 20,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
+  fill: { flex: 1 },
+  glow: { position: 'absolute', left: 0, right: 0 },
+  heroBody: { position: 'absolute', left: 0, right: 0, bottom: 28, paddingHorizontal: 20, gap: 8 },
+  heroKicker: { fontWeight: '700', letterSpacing: 0.4 },
+  heroTitle: { fontFamily: Fonts.display, fontSize: 40, lineHeight: 42, letterSpacing: -1.2 },
+  heroProgress: { marginTop: 6, width: '70%' },
+  heroActions: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
+  primary: {
+    flex: 1,
+    minHeight: 52,
+    borderRadius: 26,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
   },
-  row: { flexDirection: 'row', alignItems: 'center', paddingRight: 8 },
-  rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, paddingRight: 8 },
-  rowBody: { flex: 1, gap: 8 },
-  rowTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  pick: { padding: 12, gap: 12 },
-  pickMain: { flexDirection: 'row', gap: 14, alignItems: 'center' },
-  pickActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  shuffle: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
-  empty: {
-    marginHorizontal: 16,
-    padding: 20,
-    borderRadius: isIOS ? 14 : 20,
-    borderCurve: 'continuous',
-    gap: 12,
-    alignItems: 'flex-start',
+  primaryLabel: { ...Type.headline, fontWeight: '700' },
+  secondary: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+  dots: { position: 'absolute', bottom: 8, alignSelf: 'center', flexDirection: 'row', gap: 6 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  dotActive: { width: 18 },
+  rows: { gap: 34, paddingTop: 20 },
+  account: {
+    position: 'absolute',
+    right: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
-  emptyTitle: { marginTop: 4 },
-  emptyBody: { marginBottom: 4 },
 });

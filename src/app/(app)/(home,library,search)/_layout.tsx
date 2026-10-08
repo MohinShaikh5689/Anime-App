@@ -1,10 +1,7 @@
-import { Link, Stack } from 'expo-router';
-import { Pressable } from 'react-native';
+import { Stack } from 'expo-router';
 
-import { Icon } from '@/components/icon';
 import { TabContext, type TabKey } from '@/components/tab-context';
 import { rootScreenOptions, useStackScreenOptions } from '@/theme/stack-options';
-import { useAppTheme } from '@/theme/theme';
 
 const TITLES: Record<TabKey, string> = { home: 'Home', library: 'Library', search: 'Search' };
 
@@ -25,22 +22,23 @@ export default function TabStackLayout({ segment }: { segment: string }) {
           options={{
             ...rootScreenOptions,
             title: TITLES[tab],
-            headerRight: tab === 'home' ? () => <AccountButton /> : undefined,
+            // Home is a full-bleed hero with its own Account button.
+            headerShown: tab !== 'home',
           }}
         />
-        <Stack.Screen name="anime/[id]" options={{ title: '', headerLargeTitle: false }} />
+        <Stack.Screen
+          name="anime/[id]"
+          options={{
+            title: '',
+            headerLargeTitle: false,
+            headerTransparent: true,
+            headerBlurEffect: undefined,
+            headerStyle: { backgroundColor: 'transparent' },
+            headerTintColor: '#FFFFFF',
+          }}
+        />
       </Stack>
     </TabContext>
   );
 }
 
-function AccountButton() {
-  const { colors } = useAppTheme();
-  return (
-    <Link href="/account" asChild>
-      <Pressable hitSlop={8} accessibilityRole="button" accessibilityLabel="Account">
-        <Icon sf="person.crop.circle" md="account_circle" size={26} color={colors.primary} />
-      </Pressable>
-    </Link>
-  );
-}

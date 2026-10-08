@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   statusLabel: { ...Type.subhead, fontWeight: '600' },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   stepButton: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
-  stepCount: { fontFamily: Fonts.numeral, fontSize: 28, fontVariant: ['tabular-nums'] },
+  stepCount: { fontFamily: Fonts.display, fontSize: 28, fontVariant: ['tabular-nums'] },
   action: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -9,19 +9,18 @@ import { DynamicColorIOS, PlatformColor, useColorScheme } from 'react-native';
 
 import type { AppTheme } from './types';
 
-// Blue pencil: the animator's construction colour, used as the app tint.
-const TINT = { light: '#2F6BD8', dark: '#7AA5F2' };
+// Signature electric indigo; white text on it passes AA (4.55:1) in both appearances.
+const TINT = { light: '#6C5CFF', dark: '#6C5CFF' };
 const tint = DynamicColorIOS(TINT);
 
 const colors: AppTheme['colors'] = {
-  background: PlatformColor('systemGroupedBackground'),
-  surface: PlatformColor('secondarySystemGroupedBackground'),
+  background: PlatformColor('systemBackground'),
+  surface: PlatformColor('secondarySystemBackground'),
   fill: PlatformColor('tertiarySystemFill'),
   text: PlatformColor('label'),
   textSecondary: PlatformColor('secondaryLabel'),
   primary: tint,
-  // White on the light tint; deep navy on the lighter dark-mode tint for AA contrast.
-  onPrimary: DynamicColorIOS({ light: '#FFFFFF', dark: '#0B1B3A' }),
+  onPrimary: '#FFFFFF',
   separator: PlatformColor('separator'),
   danger: PlatformColor('systemRed'),
   rule: DynamicColorIOS({ light: '#8FB3DE', dark: '#3B5A80' }),
@@ -37,7 +36,7 @@ const colors: AppTheme['colors'] = {
 
 export function useAppTheme(): AppTheme {
   const dark = useColorScheme() === 'dark';
-  return { dark, colors };
+  return { dark, colors, canvas: dark ? '#000000' : '#FFFFFF' };
 }
 
 export function AppThemeProvider({ children }: PropsWithChildren) {

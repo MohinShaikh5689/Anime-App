@@ -7,18 +7,21 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
 import { ActionButton } from '@/components/controls';
-import { FrameStrip } from '@/components/frames';
+import { PosterWall } from '@/components/poster-wall';
 import { useAuthForm } from '@/screens/use-auth-form';
+import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
 import { Type } from '@/theme/type';
 
 export function AuthScreen() {
   const { colors } = useAppTheme();
   const form = useAuthForm();
+  const wallHeight = Math.round(useWindowDimensions().height * 0.6);
   const passwordRef = useRef<TextInput>(null);
   const signUp = form.mode === 'sign-up';
 
@@ -26,14 +29,12 @@ export function AuthScreen() {
     <KeyboardAvoidingView
       behavior="padding"
       style={[styles.fill, { backgroundColor: colors.background }]}>
+      <PosterWall height={wallHeight} />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.content}>
         <View style={styles.hero}>
-          <View style={styles.mark} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <FrameStrip progress={3} total={8} height={22} />
-          </View>
           <Text style={[styles.title, { color: colors.text }]}>
             {signUp ? 'Create Account' : 'Anime Tracker'}
           </Text>
@@ -115,10 +116,9 @@ export function AuthScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  content: { flexGrow: 1, justifyContent: 'center', padding: 20, gap: 12 },
+  content: { flexGrow: 1, justifyContent: 'flex-end', padding: 20, paddingBottom: 40, gap: 12 },
   hero: { alignItems: 'center', gap: 8, marginBottom: 20 },
-  mark: { width: 176, marginBottom: 16 },
-  title: { ...Type.largeTitle, textAlign: 'center' },
+  title: { fontFamily: Fonts.display, fontSize: 40, letterSpacing: -1.2, textAlign: 'center' },
   subtitle: { ...Type.body, textAlign: 'center' },
   group: { borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden' },
   input: { ...Type.body, paddingHorizontal: 16, minHeight: 50 },

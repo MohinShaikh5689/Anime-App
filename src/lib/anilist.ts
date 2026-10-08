@@ -10,6 +10,8 @@ export type AnimeSummary = {
   title: string;
   coverUrl: string | null;
   coverColor: string | null;
+  /** Wide key art (AniList banner); not every title has one. */
+  bannerUrl?: string | null;
   episodes: number | null;
   format: string | null;
   year: number | null;
@@ -77,7 +79,8 @@ type RawMedia = {
 const SUMMARY_FIELDS = `
   id
   title { romaji english }
-  coverImage { large color }
+  coverImage { extraLarge large color }
+  bannerImage
   episodes
   format
   seasonYear
@@ -107,6 +110,7 @@ function toSummary(m: RawMedia): AnimeSummary {
     title: m.title.english || m.title.romaji || 'Untitled',
     coverUrl: m.coverImage?.extraLarge ?? m.coverImage?.large ?? null,
     coverColor: m.coverImage?.color ?? null,
+    bannerUrl: m.bannerImage ?? null,
     episodes: m.episodes,
     format: m.format,
     year: m.seasonYear,
@@ -324,6 +328,6 @@ export function describeAnime(a: Pick<AnimeSummary, 'format' | 'year' | 'episode
 
 /** Strips detail-only fields so only the summary is persisted in the library. */
 export function pickSummary(a: AnimeSummary): AnimeSummary {
-  const { id, title, coverUrl, coverColor, episodes, format, year, averageScore } = a;
-  return { id, title, coverUrl, coverColor, episodes, format, year, averageScore };
+  const { id, title, coverUrl, coverColor, bannerUrl, episodes, format, year, averageScore } = a;
+  return { id, title, coverUrl, coverColor, bannerUrl: bannerUrl ?? null, episodes, format, year, averageScore };
 }

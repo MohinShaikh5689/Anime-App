@@ -8,6 +8,7 @@ import {
   Chip as PaperChip,
   IconButton,
   SegmentedButtons,
+  Text,
 } from 'react-native-paper';
 
 import type {
@@ -18,8 +19,8 @@ import type {
   ListSwitcherProps,
   StatusPickerProps,
 } from './controls.types';
-import { EpisodeReadout } from '@/components/frames';
 import { Icon } from '@/components/icon';
+import { Fonts } from '@/theme/fonts';
 import { LIST_STATUSES, LISTS } from '@/constants/lists';
 import { useAppTheme } from '@/theme/theme';
 
@@ -82,7 +83,10 @@ export function EpisodeStepper({ progress, episodes, onChange }: EpisodeStepperP
         accessibilityLabel="Previous episode"
       />
       <View style={styles.stepValue} accessibilityLiveRegion="polite">
-        <EpisodeReadout progress={progress} total={episodes} size={28} />
+        <Text variant="headlineMedium" style={styles.stepNumber}>
+          Ep {progress}
+          {episodes ? ` / ${episodes}` : ''}
+        </Text>
       </View>
       <IconButton
         icon="add"
@@ -163,4 +167,5 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   stepValue: { alignItems: 'center' },
+  stepNumber: { fontFamily: Fonts.display },
 });

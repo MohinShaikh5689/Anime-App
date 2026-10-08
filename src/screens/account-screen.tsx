@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   card: { borderRadius: isIOS ? 20 : 24, borderCurve: 'continuous', padding: 16, gap: 14 },
   counts: { flexDirection: 'row' },
   count: { flex: 1, alignItems: 'center', gap: 2 },
-  countValue: { fontFamily: Fonts.numeral, fontSize: 26, fontVariant: ['tabular-nums'] },
+  countValue: { fontFamily: Fonts.display, fontSize: 26, fontVariant: ['tabular-nums'] },
   countLabel: { ...Type.caption },
   separator: { height: StyleSheet.hairlineWidth },
   syncRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },

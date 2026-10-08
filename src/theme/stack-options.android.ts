@@ -2,12 +2,14 @@
 import type { NativeStackNavigationOptions } from 'expo-router';
 import { useTheme, type MD3Theme } from 'react-native-paper';
 
+import { Fonts } from '@/theme/fonts';
+
 export function useStackScreenOptions(): NativeStackNavigationOptions {
-  const { colors, fonts } = useTheme<MD3Theme>();
+  const { colors } = useTheme<MD3Theme>();
   return {
     headerStyle: { backgroundColor: colors.surface },
     headerTintColor: colors.onSurface,
-    headerTitleStyle: { fontFamily: fonts.titleLarge.fontFamily, fontWeight: '400' },
+    headerTitleStyle: { fontFamily: Fonts.display },
     headerShadowVisible: false,
     contentStyle: { backgroundColor: colors.background },
     animation: 'fade_from_bottom',

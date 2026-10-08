@@ -1,12 +1,13 @@
-import { BarlowCondensed_600SemiBold } from '@expo-google-fonts/barlow-condensed/600SemiBold';
+import { BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque/700Bold';
+import { BricolageGrotesque_800ExtraBold } from '@expo-google-fonts/bricolage-grotesque/800ExtraBold';
 
 /**
- * Barlow Condensed is the timing sheet's numeral hand: episode, frame and count
- * numerals only (measurement). All other text uses the system face (SF / Roboto)
- * so it follows Dynamic Type and platform conventions.
+ * Bricolage Grotesque is the app's display voice: hero and screen titles, section
+ * titles, big numerals. Body text, labels and controls stay in the system face.
  */
-export const FONT_ASSETS = { BarlowCondensed_600SemiBold };
+export const FONT_ASSETS = { BricolageGrotesque_700Bold, BricolageGrotesque_800ExtraBold };
 
 export const Fonts = {
-  numeral: 'BarlowCondensed_600SemiBold',
+  display: 'BricolageGrotesque_800ExtraBold',
+  heading: 'BricolageGrotesque_700Bold',
 } as const;

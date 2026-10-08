@@ -2,7 +2,11 @@
 
 type RGB = [number, number, number];
 
-function parse(hex: string): RGB | null {
+/** Brand tint, used when a platform colour isn't a plain hex (e.g. DynamicColorIOS). */
+const BRAND = '#6C5CFF';
+
+function parse(hex: unknown): RGB | null {
+  if (typeof hex !== 'string') return null;
   const h = hex.replace('#', '');
   if (!/^[0-9a-f]{6}$/i.test(h)) return null;
   return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)) as RGB;
@@ -75,10 +79,11 @@ function fromHsl([h, s, l]: [number, number, number]): RGB {
  * A show's accent from its AniList cover colour, tuned to be vivid and usable as a
  * button fill in both appearances. Near-greys fall back to the brand colour.
  */
-export function showAccent(hex: string | null | undefined, fallback: string) {
-  const rgb = hex ? parse(hex) : null;
-  if (!rgb) return fallback;
+export function showAccent(hex: string | null | undefined, fallback: unknown): string {
+  const base = parse(fallback) ? (fallback as string) : BRAND;
+  const rgb = parse(hex);
+  if (!rgb) return base;
   const [h, s, l] = toHsl(rgb);
-  if (s < 0.12) return fallback;
+  if (s < 0.12) return base;
   return toHex(fromHsl([h, Math.max(s, 0.62), Math.min(Math.max(l, 0.5), 0.62)]));
 }

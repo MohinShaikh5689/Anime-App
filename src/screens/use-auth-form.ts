@@ -72,6 +72,10 @@ function friendlyError(e: unknown) {
   if (/invalid login credentials/i.test(message)) return 'Wrong email or password.';
   if (/email not confirmed/i.test(message)) return 'Confirm your email first. Check your inbox for the link.';
   if (/already registered/i.test(message)) return 'An account with this email already exists. Sign in instead.';
+  if (/rate limit/i.test(message))
+    return 'Too many sign-up emails were sent recently. Wait a while and try again.';
+  if (/email address .* is invalid|not authorized/i.test(message))
+    return "The server couldn't send a confirmation email to this address. Try again later or use a different email.";
   if (/network|fetch/i.test(message)) return 'No connection. Check your internet and try again.';
   return message;
 }

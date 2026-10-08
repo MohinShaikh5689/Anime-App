@@ -24,10 +24,19 @@ import { PlatformPressable } from '@/components/motion';
 import { Art, Poster } from '@/components/poster';
 import { PosterCard } from '@/components/poster-card';
 import { EpisodeBar } from '@/components/progress';
-import { PosterRow, RemoteShelf, Shelf } from '@/components/shelf';
+import { AnimeShelf, PosterRow, Shelf } from '@/components/shelf';
 import { useAnimeHref } from '@/components/tab-context';
 import type { ListStatus } from '@/constants/lists';
-import { type AnimeSummary, browseAnime, currentSeason, formatLabel, pickSummary } from '@/lib/anilist';
+import {
+  type AnimeSummary,
+  currentSeason,
+  formatLabel,
+  getHomeFeed,
+  getRecommendations,
+  nextSeason,
+  pickSummary,
+  seasonLabel,
+} from '@/lib/anilist';
 import { readableOn, showAccent, withAlpha } from '@/lib/color';
 import { useRequest } from '@/lib/use-request';
 import { type LibraryEntry, useLibrary } from '@/store/library';
@@ -37,7 +46,7 @@ import { useAppTheme } from '@/theme/theme';
 import { Type } from '@/theme/type';
 
 const SEASON = currentSeason();
-const SEASON_LABEL = `${SEASON.season[0]}${SEASON.season.slice(1).toLowerCase()} ${SEASON.seasonYear}`;
+const NEXT_SEASON = nextSeason();
 
 type HeroItem = { anime: AnimeSummary; entry?: LibraryEntry };
 
@@ -53,28 +62,40 @@ export function HomeScreen() {
   const entries = useLibrary((s) => s.entries);
   const heroHeight = Math.min(Math.round(height * 0.7), 640);
 
-  const fetchTrending = useCallback(
-    (signal: AbortSignal) => browseAnime({ sort: 'TRENDING_DESC', perPage: 8 }, signal),
-    []
-  );
-  const trending = useRequest('hero:trending', fetchTrending);
+  const feed = useRequest('home:feed', getHomeFeed);
 
-  const { watching, wishlist, hero } = useMemo(() => {
+  const { watching, wishlist, finished, seed, hero } = useMemo(() => {
     const all = Object.values(entries).sort((a, b) => b.updatedAt - a.updatedAt);
     const watchingList = all.filter((e) => e.status === 'watching');
     const wishlistList = all.filter((e) => e.status === 'wishlist');
+    const finishedList = all.filter((e) => e.status === 'watched');
+    // Recommendations come from your best-rated finished show, else what you're watching.
+    const seedEntry =
+      [...finishedList].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))[0] ?? watchingList[0] ?? wishlistList[0];
     const mine: HeroItem[] = [
       ...watchingList.filter((e) => e.episodes == null || e.progress < e.episodes),
       ...wishlistList,
     ]
       .slice(0, 5)
       .map((e) => ({ anime: e, entry: e }));
-    const fill = (trending.data ?? [])
+    const fill = (feed.data?.trending ?? [])
       .filter((a) => !entries[a.id])
       .slice(0, Math.max(0, 6 - mine.length))
       .map((a) => ({ anime: a }));
-    return { watching: watchingList, wishlist: wishlistList, hero: [...mine, ...fill] };
-  }, [entries, trending.data]);
+    return {
+      watching: watchingList,
+      wishlist: wishlistList,
+      finished: finishedList,
+      seed: seedEntry,
+      hero: [...mine, ...fill],
+    };
+  }, [entries, feed.data]);
+
+  const fetchRecs = useCallback(
+    (signal: AbortSignal) => getRecommendations(seed?.id ?? 0, signal),
+    [seed?.id]
+  );
+  const recs = useRequest(seed ? `recs:${seed.id}` : null, fetchRecs);
 
   const [page, setPage] = useState(0);
   const current = hero[Math.min(page, hero.length - 1)];
@@ -172,9 +193,35 @@ export function HomeScreen() {
             </Shelf>
           ) : null}
 
-          <RemoteShelf title="Top 10 Today" query={{ sort: 'TRENDING_DESC' }} ranked />
-          <RemoteShelf title={`New in ${SEASON_LABEL}`} query={{ ...SEASON, sort: 'POPULARITY_DESC' }} />
-          <RemoteShelf title="Highest Rated" query={{ sort: 'SCORE_DESC' }} />
+          <AnimeShelf title="Top 10 Today" data={feed.data?.trending} error={feed.error} onRetry={feed.retry} ranked />
+          {seed ? (
+            <AnimeShelf
+              title={`Because you liked ${seed.title}`}
+              data={recs.data?.filter((a) => !entries[a.id])}
+              error={recs.error}
+              onRetry={recs.retry}
+            />
+          ) : null}
+          <AnimeShelf title="Airing Now" data={feed.data?.airing} error={feed.error} onRetry={feed.retry} />
+          <AnimeShelf title={`New in ${seasonLabel(SEASON)}`} data={feed.data?.season} error={feed.error} onRetry={feed.retry} />
+          <AnimeShelf title={`Coming in ${seasonLabel(NEXT_SEASON)}`} data={feed.data?.upcoming} error={feed.error} onRetry={feed.retry} />
+          <AnimeShelf title="Movie Night" data={feed.data?.movies} error={feed.error} onRetry={feed.retry} />
+          <AnimeShelf title="Edge-of-Your-Seat Action" data={feed.data?.action} error={feed.error} onRetry={feed.retry} />
+          {finished.length > 0 ? (
+            <Shelf title="Finished by You" action={{ label: 'See All', onPress: () => openLibrary('watched') }}>
+              <PosterRow<LibraryEntry>
+                data={finished}
+                keyOf={(e) => e.id}
+                renderCard={(e, w) => (
+                  <PosterCard anime={e} width={w} subtitle={e.rating ? `Your rating ${e.rating}/5` : 'Not rated yet'} />
+                )}
+              />
+            </Shelf>
+          ) : null}
+          <AnimeShelf title="Feel-Good Slice of Life" data={feed.data?.sliceOfLife} error={feed.error} onRetry={feed.retry} />
+          <AnimeShelf title="Romance Picks" data={feed.data?.romance} error={feed.error} onRetry={feed.retry} />
+          <AnimeShelf title="Highest Rated Ever" data={feed.data?.topRated} error={feed.error} onRetry={feed.retry} />
+          <AnimeShelf title="All-Time Favorites" data={feed.data?.allTime} error={feed.error} onRetry={feed.retry} />
         </View>
       </Animated.ScrollView>
 

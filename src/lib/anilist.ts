@@ -152,6 +152,75 @@ export function currentSeason(date = new Date()): { season: Season; seasonYear: 
   return { season, seasonYear: date.getFullYear() };
 }
 
+const SEASONS: Season[] = ['WINTER', 'SPRING', 'SUMMER', 'FALL'];
+
+export function nextSeason(date = new Date()) {
+  const { season, seasonYear } = currentSeason(date);
+  const i = SEASONS.indexOf(season);
+  return i === 3 ? { season: SEASONS[0], seasonYear: seasonYear + 1 } : { season: SEASONS[i + 1], seasonYear };
+}
+
+export function seasonLabel({ season, seasonYear }: { season: Season; seasonYear: number }) {
+  return `${season[0]}${season.slice(1).toLowerCase()} ${seasonYear}`;
+}
+
+const FEED_ROWS = {
+  trending: 'perPage: 10) { media(type: ANIME, isAdult: false, sort: [TRENDING_DESC])',
+  airing: 'perPage: 15) { media(type: ANIME, isAdult: false, status: RELEASING, sort: [POPULARITY_DESC])',
+  season: 'perPage: 15) { media(type: ANIME, isAdult: false, season: $season, seasonYear: $year, sort: [POPULARITY_DESC])',
+  upcoming:
+    'perPage: 15) { media(type: ANIME, isAdult: false, season: $nextSeason, seasonYear: $nextYear, sort: [POPULARITY_DESC])',
+  movies: 'perPage: 15) { media(type: ANIME, isAdult: false, format: MOVIE, sort: [SCORE_DESC])',
+  action: 'perPage: 15) { media(type: ANIME, isAdult: false, genre: "Action", sort: [TRENDING_DESC])',
+  sliceOfLife: 'perPage: 15) { media(type: ANIME, isAdult: false, genre: "Slice of Life", sort: [POPULARITY_DESC])',
+  romance: 'perPage: 15) { media(type: ANIME, isAdult: false, genre: "Romance", sort: [POPULARITY_DESC])',
+  topRated: 'perPage: 15) { media(type: ANIME, isAdult: false, sort: [SCORE_DESC])',
+  allTime: 'perPage: 15) { media(type: ANIME, isAdult: false, sort: [POPULARITY_DESC])',
+} as const;
+
+export type HomeFeed = Record<keyof typeof FEED_ROWS, AnimeSummary[]>;
+
+/** Every discovery row on Home in one request, to stay well inside AniList's rate limit. */
+export async function getHomeFeed(signal?: AbortSignal): Promise<HomeFeed> {
+  const now = currentSeason();
+  const next = nextSeason();
+  const rows = Object.entries(FEED_ROWS)
+    .map(([key, args]) => `${key}: Page(${args} { ...Summary } }`)
+    .join('\n');
+  const data = await request<Record<string, { media: RawMedia[] }>>(
+    `fragment Summary on Media { ${SUMMARY_FIELDS} }
+    query ($season: MediaSeason, $year: Int, $nextSeason: MediaSeason, $nextYear: Int) {
+      ${rows}
+    }`,
+    { season: now.season, year: now.seasonYear, nextSeason: next.season, nextYear: next.seasonYear },
+    signal
+  );
+  return Object.fromEntries(
+    Object.keys(FEED_ROWS).map((key) => [key, (data[key]?.media ?? []).map(toSummary)])
+  ) as HomeFeed;
+}
+
+/** AniList's community recommendations for a show. */
+export async function getRecommendations(id: number, signal?: AbortSignal) {
+  const data = await request<{
+    Media: { recommendations: { nodes: { mediaRecommendation: RawMedia | null }[] } };
+  }>(
+    `query ($id: Int) {
+      Media(id: $id) {
+        recommendations(sort: [RATING_DESC], perPage: 15) {
+          nodes { mediaRecommendation { ${SUMMARY_FIELDS} } }
+        }
+      }
+    }`,
+    { id },
+    signal
+  );
+  return data.Media.recommendations.nodes
+    .map((n) => n.mediaRecommendation)
+    .filter((m): m is RawMedia => m != null)
+    .map(toSummary);
+}
+
 export const GENRES = [
   'Action',
   'Adventure',

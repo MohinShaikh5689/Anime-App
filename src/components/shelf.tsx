@@ -61,27 +61,24 @@ export function PosterRow<T>({ data, renderCard, keyOf, width = CARD_WIDTH, gap 
   );
 }
 
-/** Shelf backed by an AniList browse query, with skeletons while loading. */
-export function RemoteShelf({
+/** A row of anime: posters, or Netflix-style ranked tiles; skeletons while loading. */
+export function AnimeShelf({
   title,
-  query,
+  data,
+  error,
+  onRetry,
   ranked,
   action,
 }: {
   title: string;
-  query: BrowseOptions;
+  data: AnimeSummary[] | undefined;
+  error?: Error;
+  onRetry?: () => void;
   ranked?: boolean;
   action?: Action;
 }) {
   const { colors } = useAppTheme();
-  const key = `browse:${JSON.stringify(query)}`;
-  const fetcher = useCallback(
-    (signal: AbortSignal) => browseAnime({ perPage: ranked ? 10 : 15, ...query }, signal),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [key]
-  );
-  const { data, error, retry } = useRequest(key, fetcher);
-
+  if (data && data.length === 0) return null;
   return (
     <Shelf title={title} action={action}>
       {data ? (
@@ -105,7 +102,7 @@ export function RemoteShelf({
           }
         />
       ) : error ? (
-        <Pressable onPress={retry} style={styles.error} accessibilityRole="button">
+        <Pressable onPress={onRetry} style={styles.error} accessibilityRole="button">
           <Text style={[Type.subhead, { color: colors.textSecondary }]}>
             Couldn&apos;t load this row. <Text style={{ color: colors.primary }}>Try again</Text>
           </Text>
@@ -119,6 +116,28 @@ export function RemoteShelf({
       )}
     </Shelf>
   );
+}
+
+/** Shelf backed by its own AniList browse query. */
+export function RemoteShelf({
+  title,
+  query,
+  ranked,
+  action,
+}: {
+  title: string;
+  query: BrowseOptions;
+  ranked?: boolean;
+  action?: Action;
+}) {
+  const key = `browse:${JSON.stringify(query)}`;
+  const fetcher = useCallback(
+    (signal: AbortSignal) => browseAnime({ perPage: ranked ? 10 : 15, ...query }, signal),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [key]
+  );
+  const { data, error, retry } = useRequest(key, fetcher);
+  return <AnimeShelf title={title} data={data} error={error} onRetry={retry} ranked={ranked} action={action} />;
 }
 
 const styles = StyleSheet.create({

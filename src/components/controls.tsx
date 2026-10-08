@@ -3,6 +3,7 @@
  * a system material blur (`expo-blur`) on older iOS versions and in builds without
  * the glass API. Android uses `controls.android.tsx`.
  */
+import { SegmentedControl } from '@expo/ui/community/segmented-control';
 import { BlurView } from 'expo-blur';
 import { GlassContainer, GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import * as Haptics from 'expo-haptics';
@@ -11,8 +12,10 @@ import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } fro
 
 import type {
   ActionButtonProps,
+  ChipProps,
   EpisodeStepperProps,
   IncrementButtonProps,
+  ListSwitcherProps,
   ProgressProps,
   StatusPickerProps,
 } from './controls.types';
@@ -173,7 +176,47 @@ export function ActionButton({ title, sf, md, variant = 'tonal', onPress }: Acti
   );
 }
 
+/** Native UISegmentedControl (SwiftUI segmented Picker via @expo/ui). */
+export function ListSwitcher({ value, onChange }: ListSwitcherProps) {
+  return (
+    <SegmentedControl
+      values={LIST_STATUSES.map((s) => LISTS[s].title)}
+      selectedIndex={LIST_STATUSES.indexOf(value)}
+      onChange={(e) => {
+        const next = LIST_STATUSES[e.nativeEvent.selectedSegmentIndex];
+        if (next) onChange(next);
+      }}
+      style={styles.switcher}
+    />
+  );
+}
+
+export function Chip({ label, selected, onPress }: ChipProps) {
+  const { colors } = useAppTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      onPress={() => {
+        Haptics.selectionAsync();
+        onPress();
+      }}
+      style={({ pressed }) => [
+        styles.chip,
+        { backgroundColor: selected ? colors.primary : colors.fill },
+        pressed && { opacity: 0.7 },
+      ]}>
+      <Text style={[styles.chipLabel, { color: selected ? colors.onPrimary : colors.text }]}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  switcher: { marginHorizontal: 16 },
+  chip: { height: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: 'center' },
+  chipLabel: { fontSize: 15, fontWeight: '500' },
   blurClip: { overflow: 'hidden' },
   track: { height: 4, borderRadius: 2, overflow: 'hidden' },
   bar: { height: '100%', borderRadius: 2 },

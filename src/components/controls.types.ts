@@ -29,3 +29,10 @@ export type ActionButtonProps = {
   variant?: 'primary' | 'tonal' | 'destructive';
   onPress: () => void;
 };
+
+export type ChipProps = { label: string; selected: boolean; onPress: () => void };
+
+export type ListSwitcherProps = {
+  value: ListStatus;
+  onChange: (status: ListStatus) => void;
+};

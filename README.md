@@ -6,7 +6,9 @@ Keep anime in four lists, **Watching**, **Wishlist**, **Watched** and **Dropped*
 
 ## Features
 
-- **Search** the [AniList](https://anilist.co) catalogue (public GraphQL API, no key needed). Trending anime show up before you type.
+- **Home**: Continue Watching (with one-tap +1 episode), Up Next from your wishlist, counts for each list, and Trending, This Season and Top Rated rows from AniList.
+- **Library**: all four lists in one tab, switched with a native segmented control (UISegmentedControl on iOS, Material 3 segmented buttons on Android).
+- **Search** the [AniList](https://anilist.co) catalogue (public GraphQL API, no key needed) in a poster grid. Before you type, browse trending anime or filter by genre.
 - **Add** any title to a list, **move** it between lists, or **remove** it.
 - **Episode tracking**: tap **+** on a row in the Watching list, or use the stepper on the detail screen. Starting an episode moves a show from Wishlist to Watching. Marking a show Watched fills in all its episodes.
 - **Ratings**: 1–5 stars. Tap the current star again to clear it.
@@ -39,9 +41,9 @@ src/screens/search-screen(.android).tsx
 src/
   app/                                         Expo Router routes
     _layout.tsx                                root: theme provider + native tabs
-    (watching,wishlist,watched,dropped,search)/  shared group: one stack per tab
+    (home,library,search)/                     shared group: one stack per tab
       _layout.tsx                              per-tab stack
-      index.tsx                                list screen, or search for the Search tab
+      index.tsx                                Home, Library or Search, depending on the tab
       anime/[id].tsx                           anime detail, pushed inside the current tab
   components/   rows, poster, rating stars, platform controls, tab bar
   constants/    list definitions (titles, icons, empty states)
@@ -82,6 +84,15 @@ Expo Go is fine for trying the app, but some native features only show fully in 
 #### Build it locally
 
 Use `npx expo run:ios` (macOS + Xcode 26) or `npx expo run:android`.
+
+## Publishing updates
+
+The project is linked to EAS Update (project `@mohin.shaikh/anime-app`, channel `preview`). JavaScript-only changes reach an installed dev client or Expo Go without a rebuild.
+
+- From GitHub: **Actions** → **EAS Update** → **Run workflow**. This needs an Expo access token saved as the repository secret `EXPO_TOKEN`.
+- Locally: `npx eas-cli@latest update --channel preview --environment preview`
+
+Open `exp://u.expo.dev/cdc751f6-cf63-41a0-b997-66e47e019725?channel-name=preview` in Expo Go, or paste the `https://` form of that URL into the dev client.
 
 ## Scripts
 

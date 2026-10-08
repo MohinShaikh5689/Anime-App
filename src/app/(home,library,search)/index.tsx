@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { Platform } from 'react-native';
 
 import { useTab } from '@/components/tab-context';
+import { HomeScreen } from '@/screens/home-screen';
 import { LibraryScreen } from '@/screens/library-screen';
 import { SearchScreen } from '@/screens/search-screen';
 
@@ -16,5 +17,5 @@ export default function TabIndex() {
       </>
     );
   }
-  return <LibraryScreen status={tab} />;
+  return tab === 'home' ? <HomeScreen /> : <LibraryScreen />;
 }

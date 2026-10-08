@@ -3,12 +3,21 @@
  * iOS uses `controls.tsx` (Liquid Glass).
  */
 import { StyleSheet, View } from 'react-native';
-import { Button, Chip, IconButton, ProgressBar, Text } from 'react-native-paper';
+import {
+  Button,
+  Chip as PaperChip,
+  IconButton,
+  ProgressBar,
+  SegmentedButtons,
+  Text,
+} from 'react-native-paper';
 
 import type {
   ActionButtonProps,
+  ChipProps,
   EpisodeStepperProps,
   IncrementButtonProps,
+  ListSwitcherProps,
   ProgressProps,
   StatusPickerProps,
 } from './controls.types';
@@ -46,7 +55,7 @@ export function StatusPicker({ value, onChange }: StatusPickerProps) {
         const meta = LISTS[status];
         const selected = value === status;
         return (
-          <Chip
+          <PaperChip
             key={status}
             mode={selected ? 'flat' : 'outlined'}
             selected={selected}
@@ -63,7 +72,7 @@ export function StatusPicker({ value, onChange }: StatusPickerProps) {
             accessibilityRole="radio"
             accessibilityState={{ checked: selected }}>
             {meta.title}
-          </Chip>
+          </PaperChip>
         );
       })}
     </View>
@@ -122,7 +131,36 @@ export function ActionButton({ title, md, variant = 'tonal', onPress }: ActionBu
   );
 }
 
+/** Material 3 segmented buttons. */
+export function ListSwitcher({ value, onChange }: ListSwitcherProps) {
+  return (
+    <SegmentedButtons
+      value={value}
+      onValueChange={(v) => onChange(v as ListSwitcherProps['value'])}
+      density="small"
+      style={styles.switcher}
+      buttons={LIST_STATUSES.map((status) => ({
+        value: status,
+        label: LISTS[status].title,
+        labelStyle: styles.segmentLabel,
+        showSelectedCheck: false,
+      }))}
+    />
+  );
+}
+
+/** Material 3 filter chip. */
+export function Chip({ label, selected, onPress }: ChipProps) {
+  return (
+    <PaperChip mode={selected ? 'flat' : 'outlined'} selected={selected} onPress={onPress}>
+      {label}
+    </PaperChip>
+  );
+}
+
 const styles = StyleSheet.create({
+  switcher: { marginHorizontal: 16 },
+  segmentLabel: { fontSize: 13 },
   progress: { borderRadius: 2, height: 4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

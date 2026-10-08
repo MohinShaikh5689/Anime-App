@@ -3,13 +3,11 @@ import { memo } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { IncrementButton, Progress } from '@/components/controls';
-import { Icon } from '@/components/icon';
 import { Poster } from '@/components/poster';
 import { RatingStars } from '@/components/rating-stars';
 import { useAnimeHref } from '@/components/tab-context';
-import { LISTS } from '@/constants/lists';
-import { describeAnime, type AnimeSummary } from '@/lib/anilist';
-import { type LibraryEntry, useEntry, useLibrary } from '@/store/library';
+import { describeAnime } from '@/lib/anilist';
+import { type LibraryEntry, useLibrary } from '@/store/library';
 import { useAppTheme } from '@/theme/theme';
 
 const isIOS = Platform.OS === 'ios';
@@ -77,45 +75,6 @@ export const EntryRow = memo(function EntryRow({ entry }: { entry: LibraryEntry 
   );
 });
 
-export const SearchRow = memo(function SearchRow({ anime }: { anime: AnimeSummary }) {
-  const { colors } = useAppTheme();
-  const entry = useEntry(anime.id);
-
-  return (
-    <RowShell id={anime.id}>
-      <Poster uri={anime.coverUrl} color={anime.coverColor} width={56} />
-      <View style={styles.body}>
-        <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
-          {anime.title}
-        </Text>
-        <Text style={[styles.meta, { color: colors.textSecondary }]} numberOfLines={1}>
-          {describeAnime(anime)}
-        </Text>
-        {anime.averageScore ? (
-          <Text style={[styles.meta, { color: colors.textSecondary }]}>
-            ★ {(anime.averageScore / 10).toFixed(1)}
-          </Text>
-        ) : null}
-      </View>
-      {entry ? (
-        <View
-          style={styles.badge}
-          accessibilityLabel={`In ${LISTS[entry.status].title}`}
-          accessible>
-          <Icon
-            sf={LISTS[entry.status].sfSelected}
-            md={LISTS[entry.status].md}
-            size={22}
-            color={colors.status[entry.status]}
-          />
-        </View>
-      ) : (
-        <Icon sf="chevron.right" md="chevron_right" size={14} color={colors.textSecondary} />
-      )}
-    </RowShell>
-  );
-});
-
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
@@ -131,5 +90,4 @@ const styles = StyleSheet.create({
   title: { fontSize: isIOS ? 17 : 16, fontWeight: '600' },
   meta: { fontSize: isIOS ? 13 : 14 },
   progress: { marginTop: 6, gap: 4 },
-  badge: { padding: 4 },
 });

@@ -84,31 +84,57 @@ function toSummary(m: RawMedia): AnimeSummary {
   };
 }
 
-export async function searchAnime(search: string, signal?: AbortSignal) {
+export type BrowseOptions = {
+  search?: string;
+  genre?: string;
+  season?: Season;
+  seasonYear?: number;
+  sort?: 'SEARCH_MATCH' | 'TRENDING_DESC' | 'POPULARITY_DESC' | 'SCORE_DESC';
+  perPage?: number;
+};
+
+export type Season = 'WINTER' | 'SPRING' | 'SUMMER' | 'FALL';
+
+/** Search or browse AniList: free-text search, genre, season and sort combine freely. */
+export async function browseAnime(options: BrowseOptions, signal?: AbortSignal) {
+  const { search, genre, season, seasonYear, perPage = 30 } = options;
+  const sort = options.sort ?? (search ? 'SEARCH_MATCH' : 'POPULARITY_DESC');
   const data = await request<{ Page: { media: RawMedia[] } }>(
-    `query ($search: String) {
-      Page(perPage: 30) {
-        media(search: $search, type: ANIME, isAdult: false, sort: SEARCH_MATCH) { ${SUMMARY_FIELDS} }
+    `query ($search: String, $genre: String, $season: MediaSeason, $seasonYear: Int, $sort: [MediaSort], $perPage: Int) {
+      Page(perPage: $perPage) {
+        media(search: $search, genre: $genre, season: $season, seasonYear: $seasonYear, sort: $sort, type: ANIME, isAdult: false) { ${SUMMARY_FIELDS} }
       }
     }`,
-    { search },
+    { search, genre, season, seasonYear, sort: [sort], perPage },
     signal
   );
   return data.Page.media.map(toSummary);
 }
 
-export async function trendingAnime(signal?: AbortSignal) {
-  const data = await request<{ Page: { media: RawMedia[] } }>(
-    `query {
-      Page(perPage: 30) {
-        media(type: ANIME, isAdult: false, sort: TRENDING_DESC) { ${SUMMARY_FIELDS} }
-      }
-    }`,
-    {},
-    signal
-  );
-  return data.Page.media.map(toSummary);
+export function currentSeason(date = new Date()): { season: Season; seasonYear: number } {
+  const month = date.getMonth();
+  const season: Season =
+    month < 3 ? 'WINTER' : month < 6 ? 'SPRING' : month < 9 ? 'SUMMER' : 'FALL';
+  return { season, seasonYear: date.getFullYear() };
 }
+
+export const GENRES = [
+  'Action',
+  'Adventure',
+  'Comedy',
+  'Drama',
+  'Fantasy',
+  'Romance',
+  'Sci-Fi',
+  'Slice of Life',
+  'Mystery',
+  'Sports',
+  'Psychological',
+  'Supernatural',
+  'Mecha',
+  'Horror',
+  'Music',
+] as const;
 
 export async function getAnime(id: number, signal?: AbortSignal): Promise<AnimeDetails> {
   const data = await request<{ Media: RawMedia }>(

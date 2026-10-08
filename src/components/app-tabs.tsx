@@ -5,7 +5,6 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { Platform } from 'react-native';
 
-import { LIST_STATUSES, LISTS } from '@/constants/lists';
 import { useAppTheme } from '@/theme/theme';
 
 export default function AppTabs() {
@@ -20,15 +19,17 @@ export default function AppTabs() {
         backgroundColor: colors.surface,
         indicatorColor: colors.fill,
       })}>
-      {LIST_STATUSES.map((status) => {
-        const meta = LISTS[status];
-        return (
-          <NativeTabs.Trigger key={status} name={`(${status})`}>
-            <NativeTabs.Trigger.Label>{meta.title}</NativeTabs.Trigger.Label>
-            <NativeTabs.Trigger.Icon sf={{ default: meta.sf, selected: meta.sfSelected }} md={meta.md} />
-          </NativeTabs.Trigger>
-        );
-      })}
+      <NativeTabs.Trigger name="(home)">
+        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="(library)">
+        <NativeTabs.Trigger.Label>Library</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'books.vertical', selected: 'books.vertical.fill' }}
+          md="video_library"
+        />
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="(search)" role="search">
         <NativeTabs.Trigger.Label>Search</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="magnifyingglass" md="search" />

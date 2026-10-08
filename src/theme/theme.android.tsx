@@ -13,7 +13,8 @@ import type { MD3Theme } from 'react-native-paper';
 
 import type { AppTheme } from './types';
 
-const SEED_COLOR = '#C2185B';
+// Blue pencil: the fallback seed when the device has no dynamic colour.
+const SEED_COLOR = '#2F6BD8';
 
 export function useAppTheme(): AppTheme {
   const theme = useTheme<MD3Theme>();
@@ -32,10 +33,14 @@ export function useAppTheme(): AppTheme {
         onPrimary: c.onPrimary,
         separator: c.outlineVariant,
         danger: c.error,
+        // The sheet's own ruling and graphite stay fixed so the timing sheet reads on Android too.
+        rule: theme.dark ? '#3B5A80' : '#8FB3DE',
+        ink: theme.dark ? '#D9DCE3' : '#2B2D33',
+        key: theme.dark ? '#FF5A4E' : '#E5372B',
         status: {
           watching: c.primary,
-          wishlist: c.tertiary,
-          watched: c.secondary,
+          wishlist: c.onSurfaceVariant,
+          watched: c.onSurface,
           dropped: c.outline,
         },
       },

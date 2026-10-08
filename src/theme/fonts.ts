@@ -1,15 +1,14 @@
-import { Nunito_600SemiBold } from '@expo-google-fonts/nunito/600SemiBold';
-import { Nunito_700Bold } from '@expo-google-fonts/nunito/700Bold';
-import { Nunito_800ExtraBold } from '@expo-google-fonts/nunito/800ExtraBold';
+import { BarlowCondensed_600SemiBold } from '@expo-google-fonts/barlow-condensed/600SemiBold';
+import { BarlowCondensed_700Bold } from '@expo-google-fonts/barlow-condensed/700Bold';
 
 /**
- * Nunito's rounded letterforms give the app its soft, cozy voice. It's used for titles,
- * numbers and labels; long-form text (synopses) stays in the system font.
+ * Barlow Condensed is the timing sheet's numeral hand: episode, frame and count
+ * numerals only (measurement). All other text uses the system face (SF / Roboto)
+ * so it follows Dynamic Type and platform conventions.
  */
-export const FONT_ASSETS = { Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold };
+export const FONT_ASSETS = { BarlowCondensed_600SemiBold, BarlowCondensed_700Bold };
 
 export const Fonts = {
-  display: 'Nunito_800ExtraBold',
-  heading: 'Nunito_700Bold',
-  label: 'Nunito_600SemiBold',
+  numeral: 'BarlowCondensed_600SemiBold',
+  numeralBold: 'BarlowCondensed_700Bold',
 } as const;

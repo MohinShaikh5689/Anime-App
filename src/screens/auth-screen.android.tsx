@@ -5,7 +5,7 @@ import { Button, HelperText, Text, TextInput, useTheme, type MD3Theme } from 're
 import type { TextInput as NativeTextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Fonts } from '@/theme/fonts';
+import { FrameStrip } from '@/components/frames';
 import { useAuthForm } from '@/screens/use-auth-form';
 
 export function AuthScreen() {
@@ -25,10 +25,10 @@ export function AuthScreen() {
           { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 },
         ]}>
         <View style={styles.hero}>
-          <View style={[styles.logo, { backgroundColor: colors.primaryContainer }]}>
-            <Text style={styles.logoEmoji}>🌸</Text>
+          <View style={styles.mark} importantForAccessibility="no-hide-descendants">
+            <FrameStrip progress={3} total={8} height={22} />
           </View>
-          <Text variant="headlineMedium" style={[styles.center, styles.display]}>
+          <Text variant="headlineMedium" style={styles.center}>
             {signUp ? 'Create account' : 'Welcome back'}
           </Text>
           <Text variant="bodyLarge" style={[styles.center, { color: colors.onSurfaceVariant }]}>
@@ -107,17 +107,8 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   content: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, gap: 12 },
   hero: { alignItems: 'center', gap: 8, marginBottom: 16 },
-  logo: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
   center: { textAlign: 'center' },
-  display: { fontFamily: Fonts.display },
-  logoEmoji: { fontSize: 38 },
+  mark: { width: 176, marginBottom: 16 },
   primary: { marginTop: 8 },
   buttonContent: { height: 48 },
 });

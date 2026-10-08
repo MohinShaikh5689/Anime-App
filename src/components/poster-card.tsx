@@ -1,16 +1,10 @@
 import { Link } from 'expo-router';
-import { memo, useEffect } from 'react';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+import { memo } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
+import { FrameStrip } from '@/components/frames';
 import { Icon } from '@/components/icon';
-import { PressableScale } from '@/components/motion';
+import { PlatformPressable } from '@/components/motion';
 import { Poster } from '@/components/poster';
 import { useAnimeHref } from '@/components/tab-context';
 import { LISTS } from '@/constants/lists';
@@ -18,79 +12,69 @@ import type { AnimeSummary } from '@/lib/anilist';
 import { useEntry } from '@/store/library';
 import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
+import { Type } from '@/theme/type';
 
-const RADIUS = Platform.OS === 'ios' ? 10 : 12;
+const RADIUS = Platform.OS === 'ios' ? 8 : 12;
 
 type Props = {
   anime: AnimeSummary;
   width: number;
   subtitle?: string | null;
-  /** 0–1 progress drawn along the bottom edge of the cover. */
-  progress?: number | null;
+  /** Rank in a ranked shelf, set as a sheet numeral before the title. */
+  rank?: number;
+  /** Episode progress, drawn as a frame strip under the cover. */
+  frames?: { progress: number; total: number | null };
   /** Rendered over the bottom-right corner of the cover (e.g. a +1 button). */
   accessory?: React.ReactNode;
   onLongPress?: () => void;
 };
 
-/** Cover-first card used in grids and horizontal shelves. */
+/** Cover-first card for grids and shelves. The cover is the only colour on it. */
 export const PosterCard = memo(function PosterCard({
   anime,
   width,
   subtitle,
-  progress,
+  rank,
+  frames,
   accessory,
   onLongPress,
 }: Props) {
   const { colors } = useAppTheme();
   const href = useAnimeHref();
   const entry = useEntry(anime.id);
-  const score = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : null;
 
   return (
     <View style={{ width }}>
       <Link href={href(anime.id)} asChild>
-        <PressableScale
+        <PlatformPressable
           accessibilityRole="button"
-          accessibilityLabel={anime.title}
-          scaleTo={0.95}
+          accessibilityLabel={`${anime.title}${entry ? `, in ${LISTS[entry.status].title}` : ''}`}
           onLongPress={onLongPress}
           delayLongPress={350}
-          style={styles.coverWrap}>
+          style={[styles.coverWrap, { borderColor: colors.rule as string }]}>
           <Poster uri={anime.coverUrl} color={anime.coverColor} width={width} style={styles.cover} />
-
-          {score ? (
-            <View style={[styles.badge, styles.score]}>
-              <Text style={styles.badgeText}>★ {score}</Text>
+          {entry && !frames ? (
+            <View style={[styles.mark, { backgroundColor: colors.ink as string }]}>
+              <Icon sf={LISTS[entry.status].sfSelected} md={LISTS[entry.status].md} size={12} color={colors.background as string} />
             </View>
           ) : null}
-
-          {entry ? (
-            <View
-              style={[styles.status, { backgroundColor: colors.status[entry.status] }]}
-              accessibilityLabel={`In ${LISTS[entry.status].title}`}>
-              <Icon sf={LISTS[entry.status].sfSelected} md={LISTS[entry.status].md} size={14} color="#FFFFFF" />
-            </View>
-          ) : null}
-
-          {progress != null ? (
-            <View style={styles.progressTrack}>
-              <View
-                style={[
-                  styles.progressBar,
-                  { width: `${Math.min(1, progress) * 100}%`, backgroundColor: colors.primary },
-                ]}
-              />
-            </View>
-          ) : null}
-        </PressableScale>
+        </PlatformPressable>
       </Link>
-      {accessory ? (
-        <View style={[styles.accessory, { top: width * 1.5 - 48 }]}>{accessory}</View>
-      ) : null}
+      {accessory ? <View style={[styles.accessory, { top: width * 1.5 - 46 }]}>{accessory}</View> : null}
 
-      <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
-        {anime.title}
-      </Text>
+      {frames ? (
+        <View style={styles.frames}>
+          <FrameStrip progress={frames.progress} total={frames.total} height={6} />
+        </View>
+      ) : null}
+      <View style={styles.titleRow}>
+        {rank != null ? (
+          <Text style={[styles.rank, { color: colors.textSecondary }]}>{String(rank).padStart(2, '0')}</Text>
+        ) : null}
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
+          {anime.title}
+        </Text>
+      </View>
       {subtitle ? (
         <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={1}>
           {subtitle}
@@ -103,57 +87,33 @@ export const PosterCard = memo(function PosterCard({
 /** Placeholder with the same footprint as a PosterCard. */
 export function PosterSkeleton({ width }: { width: number }) {
   const { colors } = useAppTheme();
-  const pulse = useSharedValue(0);
-  useEffect(() => {
-    pulse.set(withRepeat(withTiming(1, { duration: 900, easing: Easing.inOut(Easing.sin) }), -1, true));
-  }, [pulse]);
-  const animated = useAnimatedStyle(() => ({ opacity: 0.55 + pulse.value * 0.45 }));
   return (
-    <Animated.View style={[{ width }, animated]}>
-      <View
-        style={[styles.cover, { width, height: width * 1.5, backgroundColor: colors.fill }]}
-      />
+    <View style={{ width }} accessibilityLabel="Loading">
+      <View style={[styles.cover, { width, height: width * 1.5, backgroundColor: colors.fill }]} />
       <View style={[styles.skeletonLine, { width: width * 0.85, backgroundColor: colors.fill }]} />
       <View style={[styles.skeletonLine, { width: width * 0.5, backgroundColor: colors.fill }]} />
-    </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  coverWrap: { borderRadius: RADIUS, overflow: 'hidden' },
-  cover: { borderRadius: RADIUS },
-  badge: {
-    position: 'absolute',
-    backgroundColor: 'rgba(0,0,0,0.62)',
-    borderRadius: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  score: { top: 6, left: 6 },
-  badgeText: { color: '#FFFFFF', fontFamily: Fonts.display, fontSize: 11, fontVariant: ['tabular-nums'] },
-  status: {
+  coverWrap: { borderRadius: RADIUS, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  cover: { borderRadius: RADIUS - 1 },
+  mark: {
     position: 'absolute',
     top: 6,
     right: 6,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.9)',
   },
-  progressTrack: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 4,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-  },
-  progressBar: { height: '100%' },
   accessory: { position: 'absolute', right: 4 },
-  title: { fontFamily: Fonts.heading, fontSize: 13.5, marginTop: 8, lineHeight: 17 },
-  subtitle: { fontFamily: Fonts.label, fontSize: 12, marginTop: 2 },
+  frames: { marginTop: 8 },
+  titleRow: { flexDirection: 'row', gap: 6, marginTop: 8 },
+  rank: { fontFamily: Fonts.numeral, fontSize: 16, lineHeight: 19, fontVariant: ['tabular-nums'] },
+  title: { ...Type.subhead, fontWeight: '600', flex: 1, lineHeight: Platform.OS === 'ios' ? 19 : 20 },
+  subtitle: { ...Type.footnote, marginTop: 2 },
   skeletonLine: { height: 10, borderRadius: 5, marginTop: 8 },
 });

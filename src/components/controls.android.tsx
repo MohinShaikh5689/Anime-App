@@ -7,7 +7,6 @@ import {
   Button,
   Chip as PaperChip,
   IconButton,
-  ProgressBar,
   SegmentedButtons,
   Text,
 } from 'react-native-paper';
@@ -18,25 +17,13 @@ import type {
   EpisodeStepperProps,
   IncrementButtonProps,
   ListSwitcherProps,
-  ProgressProps,
   StatusPickerProps,
 } from './controls.types';
 import { Icon } from '@/components/icon';
-import { PlusOne } from '@/components/motion';
 import { LIST_STATUSES, LISTS } from '@/constants/lists';
 import { useAppTheme } from '@/theme/theme';
 
-export function Progress({ value, total, color }: ProgressProps) {
-  return (
-    <ProgressBar
-      progress={total ? Math.min(1, value / total) : 0}
-      color={color as string | undefined}
-      style={styles.progress}
-    />
-  );
-}
-
-export function IncrementButton({ onPress, accessibilityLabel, value }: IncrementButtonProps) {
+export function IncrementButton({ onPress, accessibilityLabel }: IncrementButtonProps) {
   return (
     <View>
       <IconButton
@@ -46,7 +33,6 @@ export function IncrementButton({ onPress, accessibilityLabel, value }: Incremen
         onPress={onPress}
         accessibilityLabel={accessibilityLabel}
       />
-      {value != null ? <PlusOne value={value} /> : null}
     </View>
   );
 }
@@ -183,7 +169,6 @@ const styles = StyleSheet.create({
   block: { alignSelf: 'stretch' },
   blockContent: { height: 48 },
   segmentLabel: { fontSize: 13 },
-  progress: { borderRadius: 2, height: 4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   stepValue: { alignItems: 'center' },

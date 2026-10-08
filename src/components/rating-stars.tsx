@@ -12,7 +12,7 @@ type Props = {
 /** 1–5 star rating. Tapping the current value again clears it. */
 export function RatingStars({ value, onChange, size = 28 }: Props) {
   const { colors } = useAppTheme();
-  const active = Platform.select({ ios: '#FFB800', default: colors.primary });
+  const active = colors.primary;
 
   return (
     <View style={styles.row} accessibilityRole="adjustable" accessibilityLabel="Rating">

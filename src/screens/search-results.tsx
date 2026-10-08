@@ -1,14 +1,13 @@
 import { useCallback, useState } from 'react';
-import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Chip } from '@/components/controls';
 import { PosterCard, PosterSkeleton } from '@/components/poster-card';
+import { SectionHeader } from '@/components/shelf';
 import { EmptyState, ErrorState } from '@/components/states';
 import { type AnimeSummary, type BrowseOptions, GENRES, browseAnime, formatLabel } from '@/lib/anilist';
 import { GRID_GAP, GRID_PADDING, useGrid } from '@/lib/use-grid';
 import { useDebouncedValue, useRequest } from '@/lib/use-request';
-import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
 
 const PADDING = GRID_PADDING;
@@ -37,7 +36,7 @@ export function SearchResults({ query }: { query: string }) {
   );
   const { data, error, loading, retry } = useRequest(key, fetcher);
 
-  const heading = q ? 'Results' : genre ? `Popular in ${genre}` : 'Trending Now';
+  const heading = q ? 'Results' : genre ? `Popular in ${genre}` : 'Trending now';
 
   const header = (
     <View style={styles.header}>
@@ -57,11 +56,7 @@ export function SearchResults({ query }: { query: string }) {
           ))}
         </ScrollView>
       ) : null}
-      {data?.length || loading ? (
-        <Text style={[styles.heading, { color: colors.text }]} accessibilityRole="header">
-          {heading}
-        </Text>
-      ) : null}
+      {data?.length || loading ? <SectionHeader title={heading} /> : null}
     </View>
   );
 
@@ -99,14 +94,12 @@ export function SearchResults({ query }: { query: string }) {
       numColumns={columns}
       data={data ?? []}
       keyExtractor={(item) => String(item.id)}
-      renderItem={({ item, index }) => (
-        <Animated.View entering={FadeIn.delay((index % (columns * 4)) * 35).duration(400)}>
-          <PosterCard
-            anime={item}
-            width={cardWidth}
-            subtitle={[formatLabel(item.format), item.year].filter(Boolean).join(' · ')}
-          />
-        </Animated.View>
+      renderItem={({ item }) => (
+        <PosterCard
+          anime={item}
+          width={cardWidth}
+          subtitle={[formatLabel(item.format), item.year].filter(Boolean).join(' · ')}
+        />
       )}
       ListHeaderComponent={header}
       ListEmptyComponent={empty}
@@ -119,7 +112,6 @@ const styles = StyleSheet.create({
   columns: { gap: GAP, paddingHorizontal: PADDING },
   header: { gap: 16, paddingTop: 8 },
   chips: { gap: 8, paddingHorizontal: PADDING },
-  heading: { fontFamily: Fonts.display, fontSize: 21, marginHorizontal: PADDING + 4 },
   skeletonGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

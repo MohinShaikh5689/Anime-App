@@ -3,9 +3,8 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { ActionButton } from '@/components/controls';
 import { Icon } from '@/components/icon';
-import { Breathing } from '@/components/motion';
-import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
+import { Type } from '@/theme/type';
 
 type EmptyStateProps = {
   sf: SFSymbol;
@@ -19,9 +18,7 @@ export function EmptyState({ sf, md, title, body, action }: EmptyStateProps) {
   const { colors } = useAppTheme();
   return (
     <View style={styles.container}>
-      <Breathing>
-        <Icon sf={sf} md={md} size={48} color={colors.textSecondary} />
-      </Breathing>
+      <Icon sf={sf} md={md} size={44} color={colors.textSecondary} />
       <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
       {body ? <Text style={[styles.body, { color: colors.textSecondary }]}>{body}</Text> : null}
       {action ? (
@@ -69,7 +66,7 @@ const styles = StyleSheet.create({
     paddingVertical: 64,
     gap: 8,
   },
-  title: { fontFamily: Fonts.display, fontSize: 21, textAlign: 'center', marginTop: 8 },
-  body: { fontFamily: Fonts.label, fontSize: 15, textAlign: 'center', lineHeight: 21 },
+  title: { ...Type.title3, textAlign: 'center', marginTop: 8 },
+  body: { ...Type.subhead, textAlign: 'center' },
   action: { marginTop: 16 },
 });

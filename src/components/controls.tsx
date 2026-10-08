@@ -1,22 +1,15 @@
 /**
- * iOS controls built on Liquid Glass (iOS 26+, `expo-glass-effect`), falling back to
- * a system material blur (`expo-blur`) on older iOS versions and in builds without
- * the glass API. Android uses `controls.android.tsx`.
+ * iOS controls. In-content buttons use the system filled and tinted styles; Liquid
+ * Glass (iOS 26, `expo-glass-effect`, with a material blur fallback) is reserved for
+ * the one floating control, the +1 that sits over cover art.
+ * Android uses `controls.android.tsx`.
  */
 import { SegmentedControl } from '@expo/ui/community/segmented-control';
 import { BlurView } from 'expo-blur';
-import { GlassContainer, GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import * as Haptics from 'expo-haptics';
 import type { PropsWithChildren } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  type StyleProp,
-  StyleSheet,
-  Text,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import { ActivityIndicator, Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
 import type {
   ActionButtonProps,
@@ -24,113 +17,85 @@ import type {
   EpisodeStepperProps,
   IncrementButtonProps,
   ListSwitcherProps,
-  ProgressProps,
   StatusPickerProps,
 } from './controls.types';
 import { Icon } from '@/components/icon';
-import { PlusOne, PressableScale } from '@/components/motion';
 import { LIST_STATUSES, LISTS } from '@/constants/lists';
+import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
+import { Type } from '@/theme/type';
 
 const liquidGlass = isLiquidGlassAvailable();
 
-type GlassProps = PropsWithChildren<{
-  style?: StyleProp<ViewStyle>;
-  tint?: ViewStyle['backgroundColor'];
-  interactive?: boolean;
-}>;
-
-/** A Liquid Glass surface, or a translucent blur on iOS < 26. */
-export function Glass({ style, tint, interactive, children }: GlassProps) {
+/** Liquid Glass for floating chrome only, with the system material on iOS < 26. */
+function FloatingGlass({ style, children }: PropsWithChildren<{ style?: StyleProp<ViewStyle> }>) {
   if (liquidGlass) {
     return (
-      <GlassView
-        glassEffectStyle="regular"
-        isInteractive={interactive}
-        tintColor={tint}
-        style={style}>
+      <GlassView glassEffectStyle="regular" isInteractive style={style}>
         {children}
       </GlassView>
     );
   }
   return (
-    <BlurView
-      tint="systemThinMaterial"
-      intensity={90}
-      style={[styles.blurClip, style, tint != null && { backgroundColor: tint }]}>
+    <BlurView tint="systemChromeMaterial" intensity={100} style={[styles.clip, style]}>
       {children}
     </BlurView>
   );
 }
 
-export function Progress({ value, total, color }: ProgressProps) {
+export function IncrementButton({ onPress, accessibilityLabel, floating }: IncrementButtonProps) {
   const { colors } = useAppTheme();
-  const ratio = total ? Math.min(1, value / total) : 0;
+  const icon = <Icon sf="plus" md="add" size={18} color={colors.primary} />;
   return (
-    <View style={[styles.track, { backgroundColor: colors.fill }]}>
-      <View
-        style={[styles.bar, { width: `${ratio * 100}%`, backgroundColor: color ?? colors.primary }]}
-      />
-    </View>
-  );
-}
-
-export function IncrementButton({ onPress, accessibilityLabel, value }: IncrementButtonProps) {
-  const { colors } = useAppTheme();
-  return (
-    <View>
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
-        hitSlop={8}
-        scaleTo={0.88}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          onPress();
-        }}>
-        <Glass interactive style={styles.circle}>
-          <Icon sf="plus" md="add" size={18} color={colors.primary} />
-        </Glass>
-      </PressableScale>
-      {value != null ? <PlusOne value={value} /> : null}
-    </View>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      hitSlop={4}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress();
+      }}
+      style={({ pressed }) => pressed && styles.pressed}>
+      {floating ? (
+        <FloatingGlass style={styles.circle}>{icon}</FloatingGlass>
+      ) : (
+        <View style={[styles.circle, { backgroundColor: colors.fill }]}>{icon}</View>
+      )}
+    </Pressable>
   );
 }
 
 export function StatusPicker({ value, onChange }: StatusPickerProps) {
   const { colors } = useAppTheme();
   return (
-    <GlassContainer spacing={8} style={styles.statusGrid}>
+    <View style={styles.statusGrid} accessibilityRole="radiogroup">
       {LIST_STATUSES.map((status) => {
         const meta = LISTS[status];
         const selected = value === status;
-        const fg = selected ? '#FFFFFF' : colors.text;
+        const fg = selected ? colors.onPrimary : colors.text;
         return (
           <Pressable
             key={status}
-            style={styles.statusCell}
             accessibilityRole="radio"
             accessibilityState={{ checked: selected }}
             onPress={() => {
               Haptics.selectionAsync();
               onChange(status);
-            }}>
-            <Glass
-              interactive
-              tint={selected ? (colors.status[status] as string) : undefined}
-              style={styles.statusPill}>
-              <Icon
-                sf={selected ? meta.sfSelected : meta.sf}
-                md={meta.md}
-                size={18}
-                color={selected ? fg : colors.status[status]}
-              />
-              <Text style={[styles.statusLabel, { color: fg }]}>{meta.title}</Text>
-            </Glass>
+            }}
+            style={({ pressed }) => [
+              styles.statusCell,
+              styles.statusPill,
+              { backgroundColor: selected ? colors.primary : colors.fill },
+              pressed && styles.pressed,
+            ]}>
+            <Icon sf={selected ? meta.sfSelected : meta.sf} md={meta.md} size={17} color={selected ? fg : colors.primary} />
+            <Text style={[styles.statusLabel, { color: fg }]} numberOfLines={1}>
+              {meta.title}
+            </Text>
           </Pressable>
         );
       })}
-    </GlassContainer>
+    </View>
   );
 }
 
@@ -141,71 +106,60 @@ export function EpisodeStepper({ progress, episodes, onChange }: EpisodeStepperP
     Haptics.selectionAsync();
     onChange(progress + delta);
   };
+  const button = (sf: 'minus' | 'plus', md: 'remove' | 'add', label: string, disabled: boolean, delta: number) => (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      disabled={disabled}
+      onPress={() => step(delta)}
+      style={({ pressed }) => [
+        styles.stepButton,
+        { backgroundColor: colors.fill },
+        disabled && styles.disabled,
+        pressed && styles.pressed,
+      ]}>
+      <Icon sf={sf} md={md} size={20} color={colors.primary} />
+    </Pressable>
+  );
   return (
     <View style={styles.stepper}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Previous episode"
-        disabled={progress <= 0}
-        onPress={() => step(-1)}>
-        <Glass interactive style={[styles.stepButton, progress <= 0 && styles.disabled]}>
-          <Icon sf="minus" md="remove" size={20} color={colors.text} />
-        </Glass>
-      </Pressable>
-      <View style={styles.stepValue} accessibilityLiveRegion="polite">
-        <Text style={[styles.stepCount, { color: colors.text }]}>
-          {progress}
-          <Text style={{ color: colors.textSecondary }}> / {episodes ?? '?'}</Text>
-        </Text>
-        <Text style={[styles.stepCaption, { color: colors.textSecondary }]}>episodes</Text>
-      </View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Next episode"
-        disabled={atMax}
-        onPress={() => step(1)}>
-        <Glass interactive style={[styles.stepButton, atMax && styles.disabled]}>
-          <Icon sf="plus" md="add" size={20} color={colors.text} />
-        </Glass>
-      </Pressable>
+      {button('minus', 'remove', 'Previous episode', progress <= 0, -1)}
+      <Text style={[styles.stepCount, { color: colors.text }]} accessibilityLiveRegion="polite" maxFontSizeMultiplier={1.6}>
+        <Text style={{ color: colors.textSecondary }}>EP </Text>
+        {String(progress).padStart(2, '0')}
+        <Text style={{ color: colors.textSecondary }}> / {episodes ?? '?'}</Text>
+      </Text>
+      {button('plus', 'add', 'Next episode', atMax, 1)}
     </View>
   );
 }
 
-export function ActionButton({
-  title,
-  sf,
-  md,
-  variant = 'tonal',
-  loading,
-  disabled,
-  block,
-  onPress,
-}: ActionButtonProps) {
+export function ActionButton({ title, sf, md, variant = 'tonal', loading, disabled, block, onPress }: ActionButtonProps) {
   const { colors } = useAppTheme();
-  const color =
-    variant === 'primary' ? '#FFFFFF' : variant === 'destructive' ? colors.danger : colors.primary;
   const inactive = disabled || loading;
+  const fg = variant === 'primary' ? colors.onPrimary : variant === 'destructive' ? colors.danger : colors.primary;
+  const bg = variant === 'primary' ? colors.primary : variant === 'tonal' ? colors.fill : 'transparent';
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ disabled: !!inactive, busy: !!loading }}
       disabled={inactive}
       onPress={onPress}
-      style={block ? styles.block : undefined}>
-      <Glass
-        interactive
-        tint={variant === 'primary' ? (colors.primary as string) : undefined}
-        style={[styles.action, disabled && styles.disabled]}>
-        {loading ? (
-          <ActivityIndicator color={color as string} />
-        ) : (
-          <>
-            {sf && md ? <Icon sf={sf} md={md} size={17} color={color} /> : null}
-            <Text style={[styles.actionLabel, { color }]}>{title}</Text>
-          </>
-        )}
-      </Glass>
+      style={({ pressed }) => [
+        styles.action,
+        { backgroundColor: bg },
+        block && styles.block,
+        disabled && styles.disabled,
+        pressed && styles.pressed,
+      ]}>
+      {loading ? (
+        <ActivityIndicator color={fg as string} />
+      ) : (
+        <>
+          {sf && md ? <Icon sf={sf} md={md} size={17} color={fg} /> : null}
+          <Text style={[styles.actionLabel, { color: fg }]}>{title}</Text>
+        </>
+      )}
     </Pressable>
   );
 }
@@ -231,6 +185,7 @@ export function Chip({ label, selected, onPress }: ChipProps) {
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected }}
+      hitSlop={{ top: 6, bottom: 6 }}
       onPress={() => {
         Haptics.selectionAsync();
         onPress();
@@ -238,30 +193,21 @@ export function Chip({ label, selected, onPress }: ChipProps) {
       style={({ pressed }) => [
         styles.chip,
         { backgroundColor: selected ? colors.primary : colors.fill },
-        pressed && { opacity: 0.7 },
+        pressed && styles.pressed,
       ]}>
-      <Text style={[styles.chipLabel, { color: selected ? colors.onPrimary : colors.text }]}>
-        {label}
-      </Text>
+      <Text style={[Type.subhead, { color: selected ? colors.onPrimary : colors.text }]}>{label}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  clip: { overflow: 'hidden' },
+  pressed: { opacity: 0.6 },
+  disabled: { opacity: 0.35 },
   switcher: { marginHorizontal: 16 },
   block: { alignSelf: 'stretch' },
-  chip: { height: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: 'center' },
-  chipLabel: { fontSize: 15, fontWeight: '500' },
-  blurClip: { overflow: 'hidden' },
-  track: { height: 4, borderRadius: 2, overflow: 'hidden' },
-  bar: { height: '100%', borderRadius: 2 },
-  circle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  chip: { minHeight: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: 'center' },
+  circle: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   statusGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   statusCell: { flexBasis: '48%', flexGrow: 1 },
   statusPill: {
@@ -269,30 +215,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    height: 44,
-    borderRadius: 22,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderCurve: 'continuous',
   },
-  statusLabel: { fontSize: 15, fontWeight: '600' },
+  statusLabel: { ...Type.subhead, fontWeight: '600' },
   stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  stepButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  disabled: { opacity: 0.4 },
-  stepValue: { alignItems: 'center' },
-  stepCount: { fontSize: 28, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  stepCaption: { fontSize: 13 },
+  stepButton: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  stepCount: { fontFamily: Fonts.numeral, fontSize: 28, fontVariant: ['tabular-nums'] },
   action: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    height: 48,
+    minHeight: 48,
     paddingHorizontal: 20,
-    borderRadius: 24,
+    borderRadius: 14,
+    borderCurve: 'continuous',
   },
-  actionLabel: { fontSize: 17, fontWeight: '600' },
+  actionLabel: { ...Type.headline },
 });

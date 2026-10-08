@@ -10,6 +10,7 @@ import { syncLibrary, useSyncStatus } from '@/lib/sync';
 import { useLibrary } from '@/store/library';
 import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
+import { Type } from '@/theme/type';
 
 const isIOS = Platform.OS === 'ios';
 
@@ -88,8 +89,8 @@ export function AccountScreen() {
       contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={styles.content}>
       <View style={styles.profile}>
-        <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-          <Text style={[styles.avatarText, { color: colors.onPrimary }]}>
+        <View style={[styles.avatar, { backgroundColor: colors.fill }]}>
+          <Text style={[styles.avatarText, { color: colors.text }]}>
             {(user?.email ?? '?').charAt(0).toUpperCase()}
           </Text>
         </View>
@@ -182,17 +183,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 6,
   },
-  avatarText: { fontFamily: Fonts.display, fontSize: 30 },
-  email: { fontFamily: Fonts.heading, fontSize: 20 },
-  muted: { fontFamily: Fonts.label, fontSize: 14 },
+  avatarText: { ...Type.title2 },
+  email: { ...Type.headline },
+  muted: { ...Type.footnote },
   card: { borderRadius: isIOS ? 20 : 24, borderCurve: 'continuous', padding: 16, gap: 14 },
   counts: { flexDirection: 'row' },
   count: { flex: 1, alignItems: 'center', gap: 2 },
-  countValue: { fontFamily: Fonts.display, fontSize: 22, fontVariant: ['tabular-nums'] },
-  countLabel: { fontFamily: Fonts.label, fontSize: 12 },
+  countValue: { fontFamily: Fonts.numeral, fontSize: 26, fontVariant: ['tabular-nums'] },
+  countLabel: { ...Type.caption },
   separator: { height: StyleSheet.hairlineWidth },
   syncRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  syncText: { flex: 1, fontFamily: Fonts.label, fontSize: 15 },
+  syncText: { flex: 1, ...Type.subhead },
   actions: { gap: 12 },
   danger: { alignItems: 'center', marginTop: 12 },
   center: { alignItems: 'center' },

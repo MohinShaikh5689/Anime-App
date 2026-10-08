@@ -5,11 +5,13 @@
  */
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import type { PropsWithChildren } from 'react';
-import { PlatformColor, useColorScheme } from 'react-native';
+import { DynamicColorIOS, PlatformColor, useColorScheme } from 'react-native';
 
 import type { AppTheme } from './types';
 
-const ACCENT = { light: '#FF2D55', dark: '#FF375F' }; // systemPink
+// Blue pencil: the animator's construction colour, used as the app tint.
+const TINT = { light: '#2F6BD8', dark: '#7AA5F2' };
+const tint = DynamicColorIOS(TINT);
 
 const colors: AppTheme['colors'] = {
   background: PlatformColor('systemGroupedBackground'),
@@ -17,15 +19,18 @@ const colors: AppTheme['colors'] = {
   fill: PlatformColor('tertiarySystemFill'),
   text: PlatformColor('label'),
   textSecondary: PlatformColor('secondaryLabel'),
-  primary: PlatformColor('systemPink'),
+  primary: tint,
   onPrimary: '#FFFFFF',
   separator: PlatformColor('separator'),
   danger: PlatformColor('systemRed'),
+  rule: DynamicColorIOS({ light: '#8FB3DE', dark: '#3B5A80' }),
+  ink: DynamicColorIOS({ light: '#2B2D33', dark: '#D9DCE3' }),
+  key: DynamicColorIOS({ light: '#E5372B', dark: '#FF5A4E' }),
   status: {
-    watching: PlatformColor('systemBlue'),
-    wishlist: PlatformColor('systemOrange'),
-    watched: PlatformColor('systemGreen'),
-    dropped: PlatformColor('systemGray'),
+    watching: tint,
+    wishlist: PlatformColor('secondaryLabel'),
+    watched: PlatformColor('label'),
+    dropped: PlatformColor('tertiaryLabel'),
   },
 };
 
@@ -40,7 +45,7 @@ export function AppThemeProvider({ children }: PropsWithChildren) {
   const base = dark ? DarkTheme : DefaultTheme;
   return (
     <ThemeProvider
-      value={{ ...base, colors: { ...base.colors, primary: dark ? ACCENT.dark : ACCENT.light } }}>
+      value={{ ...base, colors: { ...base.colors, primary: dark ? TINT.dark : TINT.light } }}>
       {children}
     </ThemeProvider>
   );

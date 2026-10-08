@@ -1,18 +1,13 @@
 import { Image } from 'expo-image';
-import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Icon } from '@/components/icon';
-import { AmbientBackdrop } from '@/components/motion';
 import { ErrorState } from '@/components/states';
 import { getCharacter } from '@/lib/anilist';
 import { useRequest } from '@/lib/use-request';
 import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
-
-type Fact = { sf: SFSymbol; md: AndroidSymbol; label: string };
+import { Type } from '@/theme/type';
 
 type Props = {
   id: number;
@@ -31,108 +26,114 @@ export function CharacterSheet({ id, initialName, initialImage }: Props) {
   const name = data?.name ?? initialName ?? '';
   const image = data?.image ?? initialImage ?? null;
 
-  const facts: Fact[] = [];
-  if (data?.gender) facts.push({ sf: 'person.fill', md: 'person', label: data.gender });
-  if (data?.age) facts.push({ sf: 'hourglass', md: 'hourglass_empty', label: `Age ${data.age}` });
-  if (data?.birthday) facts.push({ sf: 'gift.fill', md: 'cake', label: data.birthday });
-  if (data?.bloodType) facts.push({ sf: 'drop.fill', md: 'water_drop', label: `Type ${data.bloodType}` });
+  const facts: { label: string; value: string; numeric?: boolean }[] = [];
+  if (data?.gender) facts.push({ label: 'Gender', value: data.gender });
+  if (data?.age) facts.push({ label: 'Age', value: data.age, numeric: true });
+  if (data?.birthday) facts.push({ label: 'Birthday', value: data.birthday });
+  if (data?.bloodType) facts.push({ label: 'Blood type', value: data.bloodType });
   if (data?.favourites != null) {
-    facts.push({ sf: 'heart.fill', md: 'favorite', label: `${data.favourites.toLocaleString()} fans` });
+    facts.push({ label: 'Favourited by', value: data.favourites.toLocaleString(), numeric: true });
   }
+  if (data?.alternativeNames.length) facts.push({ label: 'Also known as', value: data.alternativeNames.join(', ') });
 
   return (
-    <View style={[styles.fill, { backgroundColor: colors.background }]}>
-      <AmbientBackdrop uri={image} height={300} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Animated.View entering={FadeInDown.duration(450)} style={styles.header}>
-          <View style={styles.portraitShadow}>
-            <Image
-              source={image ? { uri: image } : null}
-              style={[styles.portrait, { backgroundColor: colors.fill }]}
-              contentFit="cover"
-              transition={250}
-            />
-          </View>
-          <Text style={[styles.name, { color: colors.text }]} selectable>
-            {name}
-          </Text>
-          {data?.nativeName ? (
-            <Text style={[styles.native, { color: colors.textSecondary }]}>{data.nativeName}</Text>
-          ) : null}
-        </Animated.View>
-
-        {facts.length ? (
-          <Animated.View entering={FadeIn.delay(120).duration(400)} style={styles.facts}>
-            {facts.map((f) => (
-              <View key={f.label} style={[styles.fact, { backgroundColor: colors.surface }]}>
-                <Icon sf={f.sf} md={f.md} size={14} color={colors.primary} />
-                <Text style={[styles.factText, { color: colors.text }]}>{f.label}</Text>
-              </View>
-            ))}
-          </Animated.View>
+    <ScrollView
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}>
+      <View style={styles.header}>
+        <View style={[styles.ring, { borderColor: colors.rule as string }]}>
+          <Image
+            source={image ? { uri: image } : null}
+            style={[styles.portrait, { backgroundColor: colors.fill }]}
+            contentFit="cover"
+            transition={200}
+            accessibilityLabel={`Portrait of ${name}`}
+          />
+        </View>
+        <Text style={[Type.title2, styles.center, { color: colors.text }]} selectable>
+          {name}
+        </Text>
+        {data?.nativeName ? (
+          <Text style={[Type.subhead, { color: colors.textSecondary }]}>{data.nativeName}</Text>
         ) : null}
+      </View>
 
-        {data?.alternativeNames.length ? (
-          <Text style={[styles.aka, { color: colors.textSecondary }]}>
-            Also known as {data.alternativeNames.join(', ')}
-          </Text>
-        ) : null}
-
-        {error && !data ? (
-          <ErrorState error={error} onRetry={retry} />
-        ) : !data ? (
-          <View style={styles.skeleton}>
-            {[0.95, 0.9, 0.7].map((w) => (
-              <View key={w} style={[styles.skeletonLine, { width: `${w * 100}%`, backgroundColor: colors.fill }]} />
-            ))}
-          </View>
-        ) : data.description ? (
-          <Animated.View
-            entering={FadeIn.delay(180).duration(400)}
-            style={[styles.card, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>About</Text>
-            <Pressable onPress={() => setExpanded((v) => !v)} accessibilityRole="button">
-              <Text style={[styles.body, { color: colors.text }]} numberOfLines={expanded ? undefined : 8}>
-                {data.description}
+      {facts.length ? (
+        <View style={[styles.card, { backgroundColor: colors.surface }]}>
+          {facts.map((f, i) => (
+            <View
+              key={f.label}
+              style={[
+                styles.fact,
+                i > 0 && { borderTopColor: colors.rule as string, borderTopWidth: StyleSheet.hairlineWidth * 2 },
+              ]}>
+              <Text style={[Type.subhead, { color: colors.textSecondary }]}>{f.label}</Text>
+              <Text
+                style={[
+                  f.numeric ? styles.numeric : Type.subhead,
+                  styles.factValue,
+                  { color: colors.text },
+                ]}
+                numberOfLines={2}>
+                {f.value}
               </Text>
-              {data.description.length > 360 ? (
-                <Text style={[styles.more, { color: colors.primary }]}>
-                  {expanded ? 'Show less' : 'Show more'}
-                </Text>
-              ) : null}
-            </Pressable>
-          </Animated.View>
-        ) : (
-          <Text style={[styles.aka, { color: colors.textSecondary }]}>No bio yet. 🍃</Text>
-        )}
-      </ScrollView>
-    </View>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {error && !data ? (
+        <ErrorState error={error} onRetry={retry} />
+      ) : !data ? (
+        <View style={styles.skeleton}>
+          {[0.95, 0.9, 0.7].map((w) => (
+            <View key={w} style={[styles.skeletonLine, { width: `${w * 100}%`, backgroundColor: colors.fill }]} />
+          ))}
+        </View>
+      ) : data.description ? (
+        <View style={styles.about}>
+          <Text style={[Type.headline, styles.aboutTitle, { color: colors.text, borderBottomColor: colors.rule as string }]}>
+            About
+          </Text>
+          <Pressable onPress={() => setExpanded((v) => !v)} accessibilityRole="button">
+            <Text style={[Type.body, { color: colors.text }]} numberOfLines={expanded ? undefined : 8}>
+              {data.description}
+            </Text>
+            {data.description.length > 360 ? (
+              <Text style={[Type.subhead, styles.more, { color: colors.primary }]}>
+                {expanded ? 'Show less' : 'Show more'}
+              </Text>
+            ) : null}
+          </Pressable>
+        </View>
+      ) : (
+        <Text style={[Type.subhead, styles.center, { color: colors.textSecondary }]}>
+          AniList has no bio for this character yet.
+        </Text>
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
-  content: { padding: 20, paddingTop: 36, paddingBottom: 48, gap: 18 },
+  content: { padding: 20, paddingTop: 32, paddingBottom: 48, gap: 20 },
   header: { alignItems: 'center', gap: 4 },
-  portraitShadow: { borderRadius: 70, boxShadow: '0 10px 28px rgba(0,0,0,0.25)', marginBottom: 10 },
-  portrait: { width: 140, height: 140, borderRadius: 70, borderWidth: 3, borderColor: 'rgba(255,255,255,0.85)' },
-  name: { fontFamily: Fonts.display, fontSize: 28, textAlign: 'center' },
-  native: { fontFamily: Fonts.label, fontSize: 16 },
-  facts: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 },
-  fact: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 16,
+  ring: {
+    padding: 4,
+    borderRadius: 72,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    marginBottom: 12,
   },
-  factText: { fontFamily: Fonts.heading, fontSize: 13 },
-  aka: { fontFamily: Fonts.label, fontSize: 14, textAlign: 'center' },
-  card: { padding: 16, borderRadius: 24, borderCurve: 'continuous', gap: 8 },
-  cardTitle: { fontFamily: Fonts.heading, fontSize: 15 },
-  body: { fontSize: 15, lineHeight: 22 },
-  more: { fontFamily: Fonts.heading, fontSize: 15, marginTop: 8 },
+  portrait: { width: 128, height: 128, borderRadius: 64 },
+  center: { textAlign: 'center' },
+  card: { borderRadius: Platform.OS === 'ios' ? 14 : 20, borderCurve: 'continuous', paddingHorizontal: 16 },
+  fact: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, paddingVertical: 12 },
+  factValue: { flexShrink: 1, textAlign: 'right' },
+  numeric: { fontFamily: Fonts.numeral, fontSize: 18, fontVariant: ['tabular-nums'] },
+  about: { gap: 10 },
+  aboutTitle: { paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth * 2 },
+  more: { marginTop: 8, fontWeight: '600' },
   skeleton: { gap: 10, paddingTop: 8 },
   skeletonLine: { height: 12, borderRadius: 6 },
 });

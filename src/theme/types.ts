@@ -15,6 +15,12 @@ export type AppColors = {
   onPrimary: ColorValue;
   separator: ColorValue;
   danger: ColorValue;
+  /** Timing-sheet ruling: hairlines that structure sheets, lists and shelves. */
+  rule: ColorValue;
+  /** Graphite: inked (watched) frames. */
+  ink: ColorValue;
+  /** Key red, reserved for the next frame and the OK approval mark. Nothing else. */
+  key: ColorValue;
   status: Record<ListStatus, ColorValue>;
 };
 

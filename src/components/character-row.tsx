@@ -1,12 +1,11 @@
 import { Image } from 'expo-image';
 import { type Href, router } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInRight } from 'react-native-reanimated';
 
-import { PressableScale } from '@/components/motion';
+import { PlatformPressable } from '@/components/motion';
 import type { CharacterSummary } from '@/lib/anilist';
-import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
+import { Type } from '@/theme/type';
 
 const SIZE = 78;
 
@@ -19,11 +18,7 @@ export function CharacterRow({ characters }: { characters: CharacterSummary[] })
       keyExtractor={(c) => String(c.id)}
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.list}
-      renderItem={({ item, index }) => (
-        <Animated.View entering={FadeInRight.delay(Math.min(index, 6) * 50).duration(400)}>
-          <CharacterBubble character={item} />
-        </Animated.View>
-      )}
+      renderItem={({ item }) => <CharacterBubble character={item} />}
     />
   );
 }
@@ -32,9 +27,8 @@ function CharacterBubble({ character }: { character: CharacterSummary }) {
   const { colors } = useAppTheme();
   const main = character.role === 'MAIN';
   return (
-    <PressableScale
+    <PlatformPressable
       haptic
-      scaleTo={0.92}
       style={styles.item}
       accessibilityRole="button"
       accessibilityLabel={`${character.name}, ${main ? 'main' : 'supporting'} character`}
@@ -48,11 +42,7 @@ function CharacterBubble({ character }: { character: CharacterSummary }) {
           },
         } as unknown as Href)
       }>
-      <View
-        style={[
-          styles.ring,
-          { borderColor: main ? (colors.primary as string) : 'transparent' },
-        ]}>
+      <View style={[styles.ring, { borderColor: colors.rule as string }]}>
         <Image
           source={character.image ? { uri: character.image } : null}
           style={[styles.avatar, { backgroundColor: colors.fill }]}
@@ -63,18 +53,25 @@ function CharacterBubble({ character }: { character: CharacterSummary }) {
       <Text style={[styles.name, { color: colors.text }]} numberOfLines={2}>
         {character.name}
       </Text>
-      <Text style={[styles.role, { color: main ? colors.primary : colors.textSecondary }]}>
-        {main ? 'Main' : character.role === 'SUPPORTING' ? 'Supporting' : 'Background'}
-      </Text>
-    </PressableScale>
+      {main ? (
+        <>
+          <Text style={[styles.role, { color: colors.primary }]}>Main</Text>
+          {character.voiceActor ? (
+            <Text style={[styles.role, { color: colors.textSecondary }]} numberOfLines={1}>
+              {character.voiceActor.name}
+            </Text>
+          ) : null}
+        </>
+      ) : null}
+    </PlatformPressable>
   );
 }
 
 const styles = StyleSheet.create({
-  list: { paddingHorizontal: 16, gap: 14 },
-  item: { width: SIZE + 8, alignItems: 'center' },
-  ring: { padding: 3, borderRadius: (SIZE + 12) / 2, borderWidth: 2 },
+  list: { paddingHorizontal: 16, gap: 12 },
+  item: { width: SIZE + 16, alignItems: 'center' },
+  ring: { padding: 3, borderRadius: (SIZE + 8) / 2, borderWidth: StyleSheet.hairlineWidth * 2 },
   avatar: { width: SIZE, height: SIZE, borderRadius: SIZE / 2 },
-  name: { fontFamily: Fonts.heading, fontSize: 12.5, textAlign: 'center', marginTop: 6, lineHeight: 15 },
-  role: { fontFamily: Fonts.label, fontSize: 11, marginTop: 1 },
+  name: { ...Type.footnote, fontWeight: '600', textAlign: 'center', marginTop: 6 },
+  role: { ...Type.caption, textAlign: 'center', marginTop: 1 },
 });

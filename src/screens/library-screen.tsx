@@ -1,28 +1,26 @@
 import { type Href, router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useMemo } from 'react';
-import { ActionSheetIOS, Alert, Platform, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { ActionSheetIOS, Alert, FlatList, Platform, StyleSheet, Text, View } from 'react-native';
 
 import { IncrementButton, ListSwitcher } from '@/components/controls';
-import { AmbientBackdrop } from '@/components/motion';
 import { PosterCard } from '@/components/poster-card';
 import { EmptyState } from '@/components/states';
 import { LIST_STATUSES, LISTS } from '@/constants/lists';
 import { GRID_GAP, GRID_PADDING, useGrid } from '@/lib/use-grid';
 import { type LibraryEntry, useLibrary } from '@/store/library';
 import { useUi } from '@/store/ui';
-import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
+import { Type } from '@/theme/type';
 
 function subtitleFor(e: LibraryEntry) {
   switch (e.status) {
     case 'watching':
-      return `Ep ${e.progress}${e.episodes ? ` of ${e.episodes}` : ''}`;
+      return `Episode ${e.progress}${e.episodes ? ` of ${e.episodes}` : ''}`;
     case 'wishlist':
       return e.episodes ? `${e.episodes} episodes` : 'Not started';
     case 'watched':
-      return e.rating ? '★'.repeat(e.rating) + '☆'.repeat(5 - e.rating) : 'Tap to rate';
+      return e.rating ? `Your rating ${e.rating}/5` : 'Not rated yet';
     case 'dropped':
       return e.progress ? `Stopped at ep ${e.progress}` : 'Dropped';
   }
@@ -74,17 +72,9 @@ export function LibraryScreen() {
     [entries, status]
   );
 
-  const featured = items[0];
-
   return (
     <View style={[styles.fill, { backgroundColor: colors.background }]}>
-      <AmbientBackdrop
-        key={`${status}:${featured?.id ?? 'none'}`}
-        uri={featured?.coverUrl}
-        color={featured?.coverColor}
-        height={380}
-      />
-      <Animated.FlatList<LibraryEntry>
+      <FlatList<LibraryEntry>
         key={columns}
         style={styles.fill}
         numColumns={columns}
@@ -93,31 +83,31 @@ export function LibraryScreen() {
         columnWrapperStyle={styles.columns}
         data={items}
         keyExtractor={(item) => String(item.id)}
-        renderItem={({ item, index }) => {
+        renderItem={({ item }) => {
           const finished = item.episodes != null && item.progress >= item.episodes;
           return (
-            <Animated.View
-              entering={FadeIn.delay((index % (columns * 4)) * 35).duration(380)}
-              exiting={FadeOut.duration(200)}>
+            <View>
               <PosterCard
                 anime={item}
                 width={cardWidth}
                 subtitle={subtitleFor(item)}
-                progress={
-                  item.status === 'watching' && item.episodes ? item.progress / item.episodes : null
+                frames={
+                  item.status === 'watching' || item.status === 'dropped'
+                    ? { progress: item.progress, total: item.episodes }
+                    : undefined
                 }
                 onLongPress={() => showQuickActions(item)}
                 accessory={
                   item.status === 'watching' && !finished ? (
                     <IncrementButton
-                      value={item.progress}
+                      floating
                       onPress={() => increment(item.id)}
                       accessibilityLabel={`Mark episode ${item.progress + 1} of ${item.title} as watched`}
                     />
                   ) : null
                 }
               />
-            </Animated.View>
+            </View>
           );
         }}
         ListHeaderComponent={
@@ -125,7 +115,7 @@ export function LibraryScreen() {
             <ListSwitcher value={status} onChange={setStatus} />
             {items.length > 0 ? (
               <Text style={[styles.count, { color: colors.textSecondary }]}>
-                {items.length} {items.length === 1 ? 'title' : 'titles'} · long-press a cover for options
+                {items.length} {items.length === 1 ? 'show' : 'shows'} · Touch and hold a cover to move it
               </Text>
             ) : null}
           </View>
@@ -153,8 +143,8 @@ export function LibraryScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  content: { flexGrow: 1, paddingBottom: 32, gap: 20 },
+  content: { flexGrow: 1, paddingBottom: 32, gap: 22 },
   columns: { gap: GRID_GAP, paddingHorizontal: GRID_PADDING },
   header: { paddingTop: 8, gap: 12 },
-  count: { fontFamily: Fonts.label, fontSize: 13, marginHorizontal: 20 },
+  count: { ...Type.footnote, marginHorizontal: 20 },
 });

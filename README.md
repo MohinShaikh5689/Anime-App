@@ -27,6 +27,7 @@ Signing in is required. Accounts use email and password through [Supabase Auth](
 
 1. In the Supabase SQL Editor, run `supabase/migrations/0001_init.sql`, then `0002_grants_and_delete_account.sql`.
 2. Put the project URL and **publishable** key in `.env` as `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY`. Both are public by design, because row level security protects the data. Never put the `service_role` or secret key in the app.
+   - `eas update` doesn't read `.env`. It uses the EAS project's environment variables, and both values are already stored there for the development, preview and production environments. If you change them, update them with `npx eas-cli@latest env:update`.
 3. Supabase asks new users to confirm their email by default. The confirmation link opens your **Site URL** (Authentication → URL Configuration). You can turn **Confirm email** off under Authentication → Providers → Email if you don't want this step.
 
 ## Native look on each platform

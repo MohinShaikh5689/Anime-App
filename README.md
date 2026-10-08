@@ -76,6 +76,16 @@ npx eas-cli@latest build --profile development --platform ios      # or android
 npx expo start --dev-client
 ```
 
+#### From GitHub Actions
+
+`.github/workflows/eas-ios-dev-client.yml` runs the same EAS build from the **Actions** tab (**EAS iOS dev client** → **Run workflow**):
+
+1. Add an Expo access token ([expo.dev/settings/access-tokens](https://expo.dev/settings/access-tokens)) as the repository secret `EXPO_TOKEN`.
+2. Pick a profile:
+   - `development` installs on a real iPhone. It needs an Apple Developer account. Run `npx eas-cli@latest device:create` and `npx eas-cli@latest credentials -p ios` once first, because the CI build can't prompt for Apple sign-in.
+   - `development-simulator` makes an iOS Simulator build and needs no Apple account.
+3. Install the build from the link in the job log (or on expo.dev), then run `npx expo start --dev-client`.
+
 Or build locally with `npx expo run:ios` (macOS + Xcode 26) or `npx expo run:android`.
 
 ## Scripts

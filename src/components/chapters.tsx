@@ -43,9 +43,12 @@ export function useChapters(target: ChapterTarget | null) {
   return useRequest<ChapterData | null>(key, fetcher);
 }
 
-/** Total chapters to list: the most we know of from any source. */
+/**
+ * Total chapters to list. AniList only knows the total once a series is finished, and
+ * then it's authoritative; for ongoing series it's the latest chapter from release data.
+ */
 export function chapterCount(data: ChapterData | null | undefined, total: number | null, progress = 0) {
-  return Math.max(total ?? 0, data?.latest ?? 0, progress);
+  return Math.max(total ?? data?.latest ?? 0, progress);
 }
 
 /** "Chapter 223 expected in 6 days" with the series' release rhythm. */
@@ -56,9 +59,10 @@ export function ReleaseBanner({ data, accent }: { data: ChapterData; accent: str
   const title = expecting
     ? `Chapter ${data.latest + 1} expected ${formatExpected(data.nextExpectedAt!)}`
     : `Latest: Chapter ${data.latest}`;
+  const released = data.latestAt != null ? formatReleased(data.latestAt) : null;
   const detail = [
     data.cadenceDays && expecting ? cadenceLabel(data.cadenceDays) : null,
-    expecting ? `Ch ${data.latest} out ${formatReleased(data.latestAt!).toLowerCase()}` : formatReleased(data.latestAt!),
+    expecting && released ? `Ch ${data.latest} out ${released.toLowerCase()}` : released,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -73,13 +77,13 @@ export function ReleaseBanner({ data, accent }: { data: ChapterData; accent: str
         },
       ]}
       accessible
-      accessibilityLabel={`${title}. ${detail}`}>
+      accessibilityLabel={detail ? `${title}. ${detail}` : title}>
       <View style={[styles.bannerIcon, { backgroundColor: accent }]}>
         <Icon sf={expecting ? 'calendar.badge.clock' : 'book.closed.fill'} md={expecting ? 'event_upcoming' : 'menu_book'} size={18} color={readableOn(accent)} />
       </View>
       <View style={styles.bannerText}>
         <Text style={[Type.headline, { color: colors.text }]}>{title}</Text>
-        <Text style={[Type.footnote, { color: colors.textSecondary }]}>{detail}</Text>
+        {detail ? <Text style={[Type.footnote, { color: colors.textSecondary }]}>{detail}</Text> : null}
       </View>
     </View>
   );

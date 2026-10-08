@@ -21,6 +21,7 @@ import type {
 } from './controls.types';
 import { Icon } from '@/components/icon';
 import { LIST_STATUSES, LISTS } from '@/constants/lists';
+import { readableOn } from '@/lib/color';
 import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
 import { Type } from '@/theme/type';
@@ -65,14 +66,16 @@ export function IncrementButton({ onPress, accessibilityLabel, floating }: Incre
   );
 }
 
-export function StatusPicker({ value, onChange }: StatusPickerProps) {
+export function StatusPicker({ value, onChange, color }: StatusPickerProps) {
   const { colors } = useAppTheme();
+  const accent = color ?? (colors.primary as string);
+  const onAccent = color ? readableOn(color) : colors.onPrimary;
   return (
     <View style={styles.statusGrid} accessibilityRole="radiogroup">
       {LIST_STATUSES.map((status) => {
         const meta = LISTS[status];
         const selected = value === status;
-        const fg = selected ? colors.onPrimary : colors.text;
+        const fg = selected ? onAccent : colors.text;
         return (
           <Pressable
             key={status}
@@ -85,10 +88,10 @@ export function StatusPicker({ value, onChange }: StatusPickerProps) {
             style={({ pressed }) => [
               styles.statusCell,
               styles.statusPill,
-              { backgroundColor: selected ? colors.primary : colors.fill },
+              { backgroundColor: selected ? accent : colors.fill },
               pressed && styles.pressed,
             ]}>
-            <Icon sf={selected ? meta.sfSelected : meta.sf} md={meta.md} size={17} color={selected ? fg : colors.primary} />
+            <Icon sf={selected ? meta.sfSelected : meta.sf} md={meta.md} size={17} color={selected ? fg : accent} />
             <Text style={[styles.statusLabel, { color: fg }]} numberOfLines={1}>
               {meta.title}
             </Text>

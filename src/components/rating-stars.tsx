@@ -7,12 +7,13 @@ type Props = {
   value: number | null;
   onChange?: (value: number | null) => void;
   size?: number;
+  color?: string;
 };
 
 /** 1–5 star rating. Tapping the current value again clears it. */
-export function RatingStars({ value, onChange, size = 28 }: Props) {
+export function RatingStars({ value, onChange, size = 28, color }: Props) {
   const { colors } = useAppTheme();
-  const active = colors.primary;
+  const active = color ?? colors.primary;
 
   return (
     <View style={styles.row} accessibilityRole="adjustable" accessibilityLabel="Rating">

@@ -35,22 +35,50 @@ export function mix(hex: string, target: string, amount: number) {
   return toHex(a.map((v, i) => v + (b[i] - v) * amount) as RGB);
 }
 
-/** Black or white, whichever reads better on `hex`. */
+/** Black or white, whichever has the higher contrast ratio on `hex`. */
 export function readableOn(hex: string) {
   const rgb = parse(hex);
   if (!rgb) return '#FFFFFF';
-  return luminance(rgb) > 0.36 ? '#0B0B10' : '#FFFFFF';
+  const l = luminance(rgb);
+  const onWhite = 1.05 / (l + 0.05);
+  const onBlack = (l + 0.05) / 0.05;
+  return onBlack >= onWhite ? '#0B0B10' : '#FFFFFF';
+}
+
+function toHsl([r, g, b]: RGB): [number, number, number] {
+  const [rn, gn, bn] = [r / 255, g / 255, b / 255];
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  const h =
+    max === rn ? ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6 : max === gn ? ((bn - rn) / d + 2) / 6 : ((rn - gn) / d + 4) / 6;
+  return [h, s, l];
+}
+
+function fromHsl([h, s, l]: [number, number, number]): RGB {
+  const hue = (p: number, q: number, t: number) => {
+    const tt = t < 0 ? t + 1 : t > 1 ? t - 1 : t;
+    if (tt < 1 / 6) return p + (q - p) * 6 * tt;
+    if (tt < 1 / 2) return q;
+    if (tt < 2 / 3) return p + (q - p) * (2 / 3 - tt) * 6;
+    return p;
+  };
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  return [hue(p, q, h + 1 / 3) * 255, hue(p, q, h) * 255, hue(p, q, h - 1 / 3) * 255];
 }
 
 /**
- * A show's accent, tuned so it works as a button fill in both appearances:
- * very light colours are deepened, very dark ones lifted.
+ * A show's accent from its AniList cover colour, tuned to be vivid and usable as a
+ * button fill in both appearances. Near-greys fall back to the brand colour.
  */
 export function showAccent(hex: string | null | undefined, fallback: string) {
   const rgb = hex ? parse(hex) : null;
   if (!rgb) return fallback;
-  const l = luminance(rgb);
-  if (l > 0.55) return mix(hex!, '#000000', 0.35);
-  if (l < 0.04) return mix(hex!, '#FFFFFF', 0.3);
-  return toHex(rgb);
+  const [h, s, l] = toHsl(rgb);
+  if (s < 0.12) return fallback;
+  return toHex(fromHsl([h, Math.max(s, 0.62), Math.min(Math.max(l, 0.5), 0.62)]));
 }

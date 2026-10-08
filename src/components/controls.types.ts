@@ -16,6 +16,8 @@ export type IncrementButtonProps = {
 export type StatusPickerProps = {
   value: ListStatus | undefined;
   onChange: (status: ListStatus) => void;
+  /** Accent for the selected option (e.g. the show's colour). */
+  color?: string;
 };
 
 export type EpisodeStepperProps = {

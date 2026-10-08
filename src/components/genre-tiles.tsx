@@ -62,5 +62,5 @@ export function GenreTiles({ onPick }: { onPick: (genre: string) => void }) {
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, paddingHorizontal: GRID_PADDING },
   tile: { borderRadius: 16, borderCurve: 'continuous', padding: 14, justifyContent: 'flex-end', overflow: 'hidden' },
-  label: { fontFamily: Fonts.display, fontSize: 20, letterSpacing: -0.4 },
+  label: { fontFamily: Fonts.display, fontSize: 20 },
 });

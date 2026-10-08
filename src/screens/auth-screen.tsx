@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   content: { flexGrow: 1, justifyContent: 'flex-end', padding: 20, paddingBottom: 40, gap: 12 },
   hero: { alignItems: 'center', gap: 8, marginBottom: 20 },
-  title: { fontFamily: Fonts.display, fontSize: 40, letterSpacing: -1.2, textAlign: 'center' },
+  title: { fontFamily: Fonts.display, fontSize: 40, textAlign: 'center' },
   subtitle: { ...Type.body, textAlign: 'center' },
   group: { borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden' },
   input: { ...Type.body, paddingHorizontal: 16, minHeight: 50 },

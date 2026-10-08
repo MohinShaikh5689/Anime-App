@@ -18,7 +18,7 @@ export function SectionHeader({ title, action }: { title: string; action?: Actio
   const { colors } = useAppTheme();
   return (
     <View style={styles.header}>
-      <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
+      <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header" numberOfLines={2}>
         {title}
       </Text>
       {action ? (
@@ -142,8 +142,8 @@ export function RemoteShelf({
 
 const styles = StyleSheet.create({
   shelf: { gap: 14 },
-  header: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginHorizontal: 20 },
-  title: { fontFamily: Fonts.display, fontSize: 24, letterSpacing: -0.6 },
+  header: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginHorizontal: 20 },
+  title: { fontFamily: Fonts.display, fontSize: 24, flexShrink: 1, paddingRight: 2 },
   action: { fontWeight: '600' },
   row: { paddingHorizontal: 20 },
   skeletons: { flexDirection: 'row', gap: GAP, overflow: 'hidden' },

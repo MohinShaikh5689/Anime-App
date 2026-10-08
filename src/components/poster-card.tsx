@@ -84,7 +84,7 @@ export const RankedCard = memo(function RankedCard({ anime, rank, width }: { ani
           importantForAccessibility="no">
           {rank}
         </Text>
-        <View style={{ marginLeft: rank >= 10 ? -width * 0.42 : -width * 0.22 }}>
+        <View style={{ marginLeft: rank >= 10 ? -width * 0.3 : -width * 0.18 }}>
           <Poster uri={anime.coverUrl} color={anime.coverColor} width={width} />
         </View>
       </PlatformPressable>
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   title: { ...Type.subhead, fontWeight: '600', marginTop: 10, lineHeight: Platform.OS === 'ios' ? 19 : 20 },
   subtitle: { ...Type.footnote, marginTop: 2 },
   ranked: { flexDirection: 'row', alignItems: 'flex-end' },
-  rankNumber: { fontFamily: Fonts.display, letterSpacing: -6, opacity: 0.9 },
+  rankNumber: { fontFamily: Fonts.display, opacity: 0.9 },
   skeletonCover: { borderRadius: RADIUS },
   skeletonLine: { height: 10, borderRadius: 5, marginTop: 10 },
 });

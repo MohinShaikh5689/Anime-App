@@ -225,15 +225,14 @@ export function HomeScreen() {
         </View>
       </Animated.ScrollView>
 
-      <Link href="/account" asChild>
-        <PlatformPressable
-          haptic
-          accessibilityRole="button"
-          accessibilityLabel="Account"
-          style={[styles.account, { top: insets.top + 8 }]}>
-          <Icon sf="person.crop.circle.fill" md="account_circle" size={28} color="#FFFFFF" />
-        </PlatformPressable>
-      </Link>
+      {/* Positioned by a plain View: Link's slot doesn't forward absolute positioning reliably. */}
+      <View style={[styles.account, { top: insets.top + 8 }]}>
+        <Link href="/account" asChild>
+          <PlatformPressable haptic accessibilityRole="button" accessibilityLabel="Account" style={styles.accountButton}>
+            <Icon sf="person.crop.circle.fill" md="account_circle" size={28} color="#FFFFFF" />
+          </PlatformPressable>
+        </Link>
+      </View>
     </View>
   );
 }
@@ -402,7 +401,7 @@ const styles = StyleSheet.create({
   glow: { position: 'absolute', left: 0, right: 0 },
   heroBody: { position: 'absolute', left: 0, right: 0, bottom: 28, paddingHorizontal: 20, gap: 8 },
   heroKicker: { fontWeight: '700', letterSpacing: 0.4 },
-  heroTitle: { fontFamily: Fonts.display, fontSize: 40, lineHeight: 42, letterSpacing: -1.2 },
+  heroTitle: { fontFamily: Fonts.display, fontSize: 40, lineHeight: 42 },
   heroProgress: { marginTop: 6, width: '70%' },
   heroActions: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
   primary: {
@@ -440,9 +439,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   plusOneLabel: { fontWeight: '700' },
-  account: {
-    position: 'absolute',
-    right: 16,
+  account: { position: 'absolute', right: 16 },
+  accountButton: {
     width: 44,
     height: 44,
     borderRadius: 22,

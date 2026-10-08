@@ -3,11 +3,11 @@ import { Stack } from 'expo-router';
 import { TabContext, type TabKey } from '@/components/tab-context';
 import { rootScreenOptions, useStackScreenOptions } from '@/theme/stack-options';
 
-const TITLES: Record<TabKey, string> = { home: 'Home', library: 'Library', search: 'Search' };
+const TITLES: Record<TabKey, string> = { home: 'Home', manga: 'Manga', library: 'Library', search: 'Search' };
 
 /**
  * One stack per tab. This shared route group is expanded by Expo Router into
- * `(home)`, `(library)` and `(search)`, so the detail screen is pushed inside
+ * `(home)`, `(manga)`, `(library)` and `(search)`, so the detail screen is pushed inside
  * whichever tab it was opened from.
  */
 export default function TabStackLayout({ segment }: { segment: string }) {

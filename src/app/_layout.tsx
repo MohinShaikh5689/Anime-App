@@ -38,6 +38,10 @@ function RootStack() {
     if (hydrated && ready && fontsReady) SplashScreen.hideAsync();
   }, [hydrated, ready, fontsReady]);
 
+  // Text laid out before Bricolage registers keeps the fallback font's (narrower)
+  // measurements on iOS and gets truncated with "…", so nothing renders until fonts are in.
+  if (!fontsReady) return null;
+
   // The splash screen stays up until we know whether someone is signed in.
   return (
     <Stack screenOptions={{ headerShown: false }}>

@@ -32,11 +32,13 @@ import type { ListStatus } from '@/constants/lists';
 import {
   type AnimeSummary,
   currentSeason,
-  getHomeFeed,
+  type Feed,
+  getFeed,
   getRecommendations,
   isManga,
   kindOf,
   type MediaKind,
+  type Medium,
   mediaLabel,
   nextSeason,
   pickSummary,
@@ -57,23 +59,62 @@ const NEXT_SEASON = nextSeason();
 
 type HeroItem = { anime: AnimeSummary; entry?: LibraryEntry };
 
+type Row = { feed: string; title: string; ranked?: boolean } | { mine: 'recs' | 'finished' };
+
+const ROWS: Record<Medium, Row[]> = {
+  anime: [
+    { feed: 'trending', title: 'Top 10 Today', ranked: true },
+    { mine: 'recs' },
+    { feed: 'airing', title: 'Airing Now' },
+    { feed: 'season', title: `New in ${seasonLabel(SEASON)}` },
+    { feed: 'upcoming', title: `Coming in ${seasonLabel(NEXT_SEASON)}` },
+    { feed: 'movies', title: 'Movie Night' },
+    { feed: 'action', title: 'Edge-of-Your-Seat Action' },
+    { mine: 'finished' },
+    { feed: 'sliceOfLife', title: 'Feel-Good Slice of Life' },
+    { feed: 'romance', title: 'Romance Picks' },
+    { feed: 'topRated', title: 'Highest Rated Ever' },
+    { feed: 'allTime', title: 'All-Time Favorites' },
+  ],
+  manga: [
+    { feed: 'trending', title: 'Top 10 Today', ranked: true },
+    { mine: 'recs' },
+    { feed: 'manhwa', title: 'Trending Manhwa' },
+    { feed: 'manga', title: 'Trending Manga' },
+    { feed: 'ongoing', title: 'New Chapters Every Week' },
+    { feed: 'actionManhwa', title: 'Action Manhwa' },
+    { feed: 'completed', title: 'Binge-Ready: Completed Series' },
+    { mine: 'finished' },
+    { feed: 'romanceManhwa', title: 'Romance Manhwa' },
+    { feed: 'fantasy', title: 'Fantasy Worlds' },
+    { feed: 'manhua', title: 'Hot Manhua' },
+    { feed: 'topRated', title: 'Highest Rated Ever' },
+    { feed: 'allTime', title: 'All-Time Favorites' },
+  ],
+};
+
 function openLibrary(list: ListStatus, kind?: MediaKind) {
   useUi.getState().setLibraryList(list);
   if (kind) useUi.getState().setLibraryKind(kind);
   router.navigate('/(library)' as Href);
 }
 
-export function HomeScreen() {
+/** A discovery home: anime on the Home tab, manga/manhwa on the Manga tab. */
+export function HomeScreen({ medium = 'anime' }: { medium?: Medium }) {
   const { colors, canvas } = useAppTheme();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const entries = useLibrary((s) => s.entries);
   const heroHeight = Math.min(Math.round(height * 0.7), 640);
 
-  const feed = useRequest('home:feed', getHomeFeed);
+  const fetchFeed = useCallback((signal: AbortSignal) => getFeed(medium, signal), [medium]);
+  const feed = useRequest<Feed>(`home:feed:${medium}`, fetchFeed);
+  const comics = medium === 'manga';
 
-  const { watching, reading, wishlist, finished, seed, hero } = useMemo(() => {
-    const all = Object.values(entries).sort((a, b) => b.updatedAt - a.updatedAt);
+  const { watching, wishlist, finished, seed, hero } = useMemo(() => {
+    const all = Object.values(entries)
+      .filter((e) => isManga(e) === comics)
+      .sort((a, b) => b.updatedAt - a.updatedAt);
     const watchingList = all.filter((e) => e.status === 'watching');
     const wishlistList = all.filter((e) => e.status === 'wishlist');
     const finishedList = all.filter((e) => e.status === 'watched');
@@ -91,14 +132,13 @@ export function HomeScreen() {
       .slice(0, Math.max(0, 6 - mine.length))
       .map((a) => ({ anime: a }));
     return {
-      watching: watchingList.filter((e) => !isManga(e)),
-      reading: watchingList.filter(isManga),
+      watching: watchingList,
       wishlist: wishlistList,
       finished: finishedList,
       seed: seedEntry,
       hero: [...mine, ...fill],
     };
-  }, [entries, feed.data]);
+  }, [entries, feed.data, comics]);
 
   const fetchRecs = useCallback(
     (signal: AbortSignal) => getRecommendations(seed?.id ?? 0, signal),
@@ -108,7 +148,8 @@ export function HomeScreen() {
 
   const [page, setPage] = useState(0);
   const current = hero[Math.min(page, hero.length - 1)];
-  const glow = showAccent(current?.anime.coverColor, colors.primary as string);
+  const glow = showAccent(current?.anime.coverColor, colors.primary);
+  const kindFor = (list: LibraryEntry[]): MediaKind => (comics ? kindOf(list[0] ?? { type: 'MANGA' }) : 'anime');
 
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
@@ -175,8 +216,10 @@ export function HomeScreen() {
         <View style={styles.rows}>
           {watching.length > 0 ? (
             <Shelf
-              title="Continue Watching"
-              action={watching.length > 4 ? { label: 'See All', onPress: () => openLibrary('watching', 'anime') } : undefined}>
+              title={comics ? 'Continue Reading' : 'Continue Watching'}
+              action={
+                watching.length > 4 ? { label: 'See All', onPress: () => openLibrary('watching', kindFor(watching)) } : undefined
+              }>
               <PosterRow<LibraryEntry>
                 data={watching}
                 width={Math.min(320, width * 0.82)}
@@ -186,66 +229,57 @@ export function HomeScreen() {
             </Shelf>
           ) : null}
 
-          {reading.length > 0 ? (
-            <Shelf
-              title="Continue Reading"
-              action={reading.length > 4 ? { label: 'See All', onPress: () => openLibrary('watching', kindOf(reading[0])) } : undefined}>
-              <PosterRow<LibraryEntry>
-                data={reading}
-                width={Math.min(320, width * 0.82)}
-                keyOf={(e) => e.id}
-                renderCard={(e, w) => <ContinueCard entry={e} width={w} />}
-              />
-            </Shelf>
-          ) : null}
-
           {wishlist.length > 0 ? (
-            <Shelf title="Your Wishlist" action={{ label: 'See All', onPress: () => openLibrary('wishlist', kindOf(wishlist[0])) }}>
+            <Shelf title="Your Wishlist" action={{ label: 'See All', onPress: () => openLibrary('wishlist', kindFor(wishlist)) }}>
               <PosterRow<LibraryEntry>
                 data={wishlist}
                 keyOf={(e) => e.id}
                 renderCard={(e, w) => (
-                  <PosterCard
-                    anime={e}
-                    width={w}
-                    subtitle={[mediaLabel(e), e.year].filter(Boolean).join(' · ')}
-                  />
+                  <PosterCard anime={e} width={w} subtitle={[mediaLabel(e), e.year].filter(Boolean).join(' · ')} />
                 )}
               />
             </Shelf>
           ) : null}
 
-          <AnimeShelf title="Top 10 Today" data={feed.data?.trending} error={feed.error} onRetry={feed.retry} ranked />
-          {seed ? (
-            <AnimeShelf
-              title={`Because you liked ${seed.title}`}
-              data={recs.data?.filter((a) => !entries[a.id])}
-              error={recs.error}
-              onRetry={recs.retry}
-            />
-          ) : null}
-          <AnimeShelf title="Airing Now" data={feed.data?.airing} error={feed.error} onRetry={feed.retry} />
-          <AnimeShelf title={`New in ${seasonLabel(SEASON)}`} data={feed.data?.season} error={feed.error} onRetry={feed.retry} />
-          <AnimeShelf title={`Coming in ${seasonLabel(NEXT_SEASON)}`} data={feed.data?.upcoming} error={feed.error} onRetry={feed.retry} />
-          <AnimeShelf title="Trending Manhwa" data={feed.data?.manhwa} error={feed.error} onRetry={feed.retry} />
-          <AnimeShelf title="Movie Night" data={feed.data?.movies} error={feed.error} onRetry={feed.retry} />
-          <AnimeShelf title="Edge-of-Your-Seat Action" data={feed.data?.action} error={feed.error} onRetry={feed.retry} />
-          {finished.length > 0 ? (
-            <Shelf title="Finished by You" action={{ label: 'See All', onPress: () => openLibrary('watched', kindOf(finished[0])) }}>
-              <PosterRow<LibraryEntry>
-                data={finished}
-                keyOf={(e) => e.id}
-                renderCard={(e, w) => (
-                  <PosterCard anime={e} width={w} subtitle={e.rating ? `Your rating ${e.rating}/5` : 'Not rated yet'} />
-                )}
-              />
-            </Shelf>
-          ) : null}
-          <AnimeShelf title="Feel-Good Slice of Life" data={feed.data?.sliceOfLife} error={feed.error} onRetry={feed.retry} />
-          <AnimeShelf title="Manga Everyone's Reading" data={feed.data?.manga} error={feed.error} onRetry={feed.retry} />
-          <AnimeShelf title="Romance Picks" data={feed.data?.romance} error={feed.error} onRetry={feed.retry} />
-          <AnimeShelf title="Highest Rated Ever" data={feed.data?.topRated} error={feed.error} onRetry={feed.retry} />
-          <AnimeShelf title="All-Time Favorites" data={feed.data?.allTime} error={feed.error} onRetry={feed.retry} />
+          {ROWS[medium].map((row) => {
+            if ('feed' in row) {
+              return (
+                <AnimeShelf
+                  key={row.feed}
+                  title={row.title}
+                  data={feed.data?.[row.feed]}
+                  error={feed.error}
+                  onRetry={feed.retry}
+                  ranked={row.ranked}
+                />
+              );
+            }
+            if (row.mine === 'recs') {
+              return seed ? (
+                <AnimeShelf
+                  key="recs"
+                  title={`Because you liked ${seed.title}`}
+                  data={recs.data?.filter((a) => !entries[a.id])}
+                  error={recs.error}
+                  onRetry={recs.retry}
+                />
+              ) : null;
+            }
+            return finished.length > 0 ? (
+              <Shelf
+                key="finished"
+                title={comics ? 'Read by You' : 'Finished by You'}
+                action={{ label: 'See All', onPress: () => openLibrary('watched', kindFor(finished)) }}>
+                <PosterRow<LibraryEntry>
+                  data={finished}
+                  keyOf={(e) => e.id}
+                  renderCard={(e, w) => (
+                    <PosterCard anime={e} width={w} subtitle={e.rating ? `Your rating ${e.rating}/5` : 'Not rated yet'} />
+                  )}
+                />
+              </Shelf>
+            ) : null;
+          })}
         </View>
       </Animated.ScrollView>
 

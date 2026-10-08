@@ -238,7 +238,7 @@ export function seasonLabel({ season, seasonYear }: { season: Season; seasonYear
   return `${season[0]}${season.slice(1).toLowerCase()} ${seasonYear}`;
 }
 
-const FEED_ROWS = {
+const ANIME_FEED = {
   trending: 'perPage: 10) { media(type: ANIME, isAdult: false, sort: [TRENDING_DESC])',
   airing: 'perPage: 15) { media(type: ANIME, isAdult: false, status: RELEASING, sort: [POPULARITY_DESC])',
   season: 'perPage: 15) { media(type: ANIME, isAdult: false, season: $season, seasonYear: $year, sort: [POPULARITY_DESC])',
@@ -249,31 +249,53 @@ const FEED_ROWS = {
   sliceOfLife: 'perPage: 15) { media(type: ANIME, isAdult: false, genre: "Slice of Life", sort: [POPULARITY_DESC])',
   romance: 'perPage: 15) { media(type: ANIME, isAdult: false, genre: "Romance", sort: [POPULARITY_DESC])',
   topRated: 'perPage: 15) { media(type: ANIME, isAdult: false, sort: [SCORE_DESC])',
-  manga: 'perPage: 15) { media(type: MANGA, countryOfOrigin: JP, isAdult: false, sort: [TRENDING_DESC])',
-  manhwa: 'perPage: 15) { media(type: MANGA, countryOfOrigin: KR, isAdult: false, sort: [TRENDING_DESC])',
   allTime: 'perPage: 15) { media(type: ANIME, isAdult: false, sort: [POPULARITY_DESC])',
-} as const;
+};
 
-export type HomeFeed = Record<keyof typeof FEED_ROWS, AnimeSummary[]>;
+const MANGA_FEED = {
+  trending: 'perPage: 10) { media(type: MANGA, isAdult: false, sort: [TRENDING_DESC])',
+  manhwa: 'perPage: 15) { media(type: MANGA, countryOfOrigin: KR, isAdult: false, sort: [TRENDING_DESC])',
+  manga: 'perPage: 15) { media(type: MANGA, countryOfOrigin: JP, isAdult: false, sort: [TRENDING_DESC])',
+  ongoing: 'perPage: 15) { media(type: MANGA, isAdult: false, status: RELEASING, sort: [POPULARITY_DESC])',
+  actionManhwa:
+    'perPage: 15) { media(type: MANGA, countryOfOrigin: KR, isAdult: false, genre: "Action", sort: [POPULARITY_DESC])',
+  completed: 'perPage: 15) { media(type: MANGA, isAdult: false, status: FINISHED, sort: [TRENDING_DESC])',
+  romanceManhwa:
+    'perPage: 15) { media(type: MANGA, countryOfOrigin: KR, isAdult: false, genre: "Romance", sort: [POPULARITY_DESC])',
+  fantasy: 'perPage: 15) { media(type: MANGA, isAdult: false, genre: "Fantasy", sort: [TRENDING_DESC])',
+  manhua: 'perPage: 15) { media(type: MANGA, countryOfOrigin: CN, isAdult: false, sort: [POPULARITY_DESC])',
+  topRated: 'perPage: 15) { media(type: MANGA, isAdult: false, sort: [SCORE_DESC])',
+  allTime: 'perPage: 15) { media(type: MANGA, isAdult: false, sort: [POPULARITY_DESC])',
+};
 
-/** Every discovery row on Home in one request, to stay well inside AniList's rate limit. */
-export async function getHomeFeed(signal?: AbortSignal): Promise<HomeFeed> {
+/** Home is anime; the Manga tab covers manga, manhwa and manhua. */
+export type Medium = 'anime' | 'manga';
+
+export type Feed = Record<string, AnimeSummary[]>;
+
+/** Every discovery row on a home page in one request, to stay well inside AniList's rate limit. */
+export async function getFeed(medium: Medium, signal?: AbortSignal): Promise<Feed> {
+  const rowsDef: Record<string, string> = medium === 'anime' ? ANIME_FEED : MANGA_FEED;
   const now = currentSeason();
   const next = nextSeason();
-  const rows = Object.entries(FEED_ROWS)
+  const rows = Object.entries(rowsDef)
     .map(([key, args]) => `${key}: Page(${args} { ...Summary } }`)
     .join('\n');
+  const variables =
+    medium === 'anime'
+      ? { season: now.season, year: now.seasonYear, nextSeason: next.season, nextYear: next.seasonYear }
+      : {};
+  const params =
+    medium === 'anime' ? '($season: MediaSeason, $year: Int, $nextSeason: MediaSeason, $nextYear: Int)' : '';
   const data = await request<Record<string, { media: RawMedia[] }>>(
     `fragment Summary on Media { ${SUMMARY_FIELDS} }
-    query ($season: MediaSeason, $year: Int, $nextSeason: MediaSeason, $nextYear: Int) {
+    query ${params} {
       ${rows}
     }`,
-    { season: now.season, year: now.seasonYear, nextSeason: next.season, nextYear: next.seasonYear },
+    variables,
     signal
   );
-  return Object.fromEntries(
-    Object.keys(FEED_ROWS).map((key) => [key, (data[key]?.media ?? []).map(toSummary)])
-  ) as HomeFeed;
+  return Object.fromEntries(Object.keys(rowsDef).map((key) => [key, (data[key]?.media ?? []).map(toSummary)]));
 }
 
 /** AniList's community recommendations for a show. */

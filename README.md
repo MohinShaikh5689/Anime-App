@@ -58,7 +58,7 @@ src/screens/search-screen(.android).tsx
 src/
   app/                                         Expo Router routes
     _layout.tsx                                root: theme provider + native tabs
-    (home,library,search)/                     shared group: one stack per tab
+    (home,manga,library,search)/                     shared group: one stack per tab
       _layout.tsx                              per-tab stack
       index.tsx                                Home, Library or Search, depending on the tab
       anime/[id].tsx                           anime detail, pushed inside the current tab

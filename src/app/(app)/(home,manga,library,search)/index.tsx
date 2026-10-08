@@ -17,5 +17,6 @@ export default function TabIndex() {
       </>
     );
   }
+  if (tab === 'manga') return <HomeScreen medium="manga" />;
   return tab === 'home' ? <HomeScreen /> : <LibraryScreen />;
 }

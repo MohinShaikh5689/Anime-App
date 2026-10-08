@@ -23,6 +23,10 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="(manga)">
+        <NativeTabs.Trigger.Label>Manga</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'book', selected: 'book.fill' }} md="menu_book" />
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="(library)">
         <NativeTabs.Trigger.Label>Library</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon

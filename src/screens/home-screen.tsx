@@ -59,6 +59,12 @@ const NEXT_SEASON = nextSeason();
 
 type HeroItem = { anime: AnimeSummary; entry?: LibraryEntry };
 
+/** Big for short titles, stepping down so long ones stay readable in three lines. */
+function heroTitleSize(title: string) {
+  const fontSize = title.length > 40 ? 26 : title.length > 24 ? 30 : 36;
+  return { fontSize, lineHeight: Math.round(fontSize * 1.15) };
+}
+
 type Row = { feed: string; title: string; ranked?: boolean } | { mine: 'recs' | 'finished' };
 
 const ROWS: Record<Medium, Row[]> = {
@@ -363,18 +369,28 @@ function HeroSlide({
         style={[
           StyleSheet.absoluteFill,
           {
-            experimental_backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 22%, ${withAlpha(canvas, 0)} 45%, ${withAlpha(canvas, 0.85)} 80%, ${canvas} 100%)`,
+            // Solid enough behind the text block that the title reads over any artwork.
+            experimental_backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 20%, ${withAlpha(canvas, 0)} 36%, ${withAlpha(canvas, 0.72)} 54%, ${withAlpha(canvas, 0.93)} 68%, ${canvas} 100%)`,
           },
         ]}
       />
       <View style={styles.heroBody}>
-        <Text style={[Type.footnote, styles.heroKicker, { color: accent }]}>{kicker}</Text>
+        <View style={[styles.heroKicker, { backgroundColor: accent }]}>
+          <Text style={[styles.heroKickerLabel, { color: onAccent }]}>{kicker.toUpperCase()}</Text>
+        </View>
         <Link href={href(anime.id)} asChild>
-          <Text style={[styles.heroTitle, { color: colors.text }]} numberOfLines={2} accessibilityRole="link">
+          <Text
+            style={[
+              styles.heroTitle,
+              heroTitleSize(anime.title),
+              { color: colors.text, textShadowColor: withAlpha(canvas, 0.9) },
+            ]}
+            numberOfLines={3}
+            accessibilityRole="link">
             {anime.title}
           </Text>
         </Link>
-        <Text style={[Type.subhead, { color: colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[Type.subhead, styles.heroMeta, { color: colors.text }]} numberOfLines={1}>
           {[
             mediaLabel(anime),
             anime.year,
@@ -425,8 +441,10 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   glow: { position: 'absolute', left: 0, right: 0 },
   heroBody: { position: 'absolute', left: 0, right: 0, bottom: 28, paddingHorizontal: 20, gap: 8 },
-  heroKicker: { fontWeight: '700', letterSpacing: 0.4 },
-  heroTitle: { fontFamily: Fonts.display, fontSize: 40, lineHeight: 42 },
+  heroKicker: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  heroKickerLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.8 },
+  heroTitle: { fontFamily: Fonts.heading, textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 14 },
+  heroMeta: { fontWeight: '600', opacity: 0.85 },
   heroProgress: { marginTop: 6, width: '70%' },
   heroActions: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
   primary: {

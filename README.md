@@ -69,24 +69,19 @@ Expo Go is fine for trying the app, but some native features only show fully in 
 - **Liquid Glass** needs iOS 26 and an app built with Xcode 26. In Expo Go, or on older iOS, the app falls back to blur materials automatically.
 - **Material You dynamic color** reads the wallpaper palette through `@pchmn/expo-material3-theme`, which isn't part of Expo Go. Expo Go uses the fallback seed color instead.
 
-Build one in the cloud with EAS, so you don't need Xcode or Android Studio:
+#### Build it with GitHub Actions (no EAS, no Mac needed)
 
-```bash
-npx eas-cli@latest build --profile development --platform ios      # or android
-npx expo start --dev-client
-```
+`.github/workflows/ios-dev-client.yml` builds an **unsigned** iOS dev client on a GitHub-hosted Mac running macOS 26 and Xcode 26:
 
-#### From GitHub Actions
+1. Go to **Actions** → **iOS dev client (unsigned)** → **Run workflow**, and pick a target:
+   - `device` produces `AnimeTracker-dev-unsigned.ipa`. Sign and install it with your own Apple ID using a sideloading tool such as [Sideloadly](https://sideloadly.io) or [AltStore](https://altstore.io). With a free Apple ID the app expires after 7 days and has to be re-signed.
+   - `simulator` produces `AnimeTracker-dev-simulator.zip`. Unzip it and run `xcrun simctl install booted AnimeTracker.app`.
+2. Download the build from the run's **Artifacts** section.
+3. Run `npx expo start --dev-client` and open the project from the dev client.
 
-`.github/workflows/eas-ios-dev-client.yml` runs the same EAS build from the **Actions** tab (**EAS iOS dev client** → **Run workflow**):
+#### Build it locally
 
-1. Add an Expo access token ([expo.dev/settings/access-tokens](https://expo.dev/settings/access-tokens)) as the repository secret `EXPO_TOKEN`.
-2. Pick a profile:
-   - `development` installs on a real iPhone. It needs an Apple Developer account. Run `npx eas-cli@latest device:create` and `npx eas-cli@latest credentials -p ios` once first, because the CI build can't prompt for Apple sign-in.
-   - `development-simulator` makes an iOS Simulator build and needs no Apple account.
-3. Install the build from the link in the job log (or on expo.dev), then run `npx expo start --dev-client`.
-
-Or build locally with `npx expo run:ios` (macOS + Xcode 26) or `npx expo run:android`.
+Use `npx expo run:ios` (macOS + Xcode 26) or `npx expo run:android`.
 
 ## Scripts
 

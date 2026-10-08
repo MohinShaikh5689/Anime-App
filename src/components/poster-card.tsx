@@ -4,7 +4,7 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { Icon } from '@/components/icon';
 import { PlatformPressable } from '@/components/motion';
-import { Art, Poster } from '@/components/poster';
+import { Poster } from '@/components/poster';
 import { EpisodeBar } from '@/components/progress';
 import { useAnimeHref } from '@/components/tab-context';
 import { LISTS } from '@/constants/lists';
@@ -92,54 +92,6 @@ export const RankedCard = memo(function RankedCard({ anime, rank, width }: { ani
   );
 });
 
-/** Wide 16:9 card on the show's banner art, with progress — for Continue Watching. */
-export function WideCard({
-  anime,
-  width,
-  progress,
-  total,
-  accessory,
-}: {
-  anime: AnimeSummary;
-  width: number;
-  progress: number;
-  total: number | null;
-  accessory?: React.ReactNode;
-}) {
-  const { colors } = useAppTheme();
-  const href = useAnimeHref();
-  const accent = showAccent(anime.coverColor, colors.primary as string);
-  const height = Math.round(width * 0.5625);
-  return (
-    <View style={{ width }}>
-      <Link href={href(anime.id)} asChild>
-        <PlatformPressable
-          accessibilityRole="button"
-          accessibilityLabel={`${anime.title}, episode ${progress}${total ? ` of ${total}` : ''}`}
-          style={[styles.wide, { height, boxShadow: `0 12px 28px ${accent}40` }]}>
-          <Art
-            uri={anime.bannerUrl ?? anime.coverUrl}
-            color={anime.coverColor}
-            style={StyleSheet.absoluteFill}
-            contentPosition="top"
-          />
-          <View style={[StyleSheet.absoluteFill, styles.wideShade]} />
-          <View style={styles.wideBody}>
-            <Text style={styles.wideTitle} numberOfLines={1}>
-              {anime.title}
-            </Text>
-            <Text style={styles.wideMeta}>
-              {progress === 0 ? 'Start watching' : `Episode ${progress}${total ? ` of ${total}` : ''}`}
-            </Text>
-            <EpisodeBar progress={progress} total={total} color="#FFFFFF" height={4} onArt />
-          </View>
-        </PlatformPressable>
-      </Link>
-      {accessory ? <View style={styles.wideAccessory}>{accessory}</View> : null}
-    </View>
-  );
-}
-
 /** Placeholder with the same footprint as a PosterCard. */
 export function PosterSkeleton({ width }: { width: number }) {
   const { colors } = useAppTheme();
@@ -171,14 +123,6 @@ const styles = StyleSheet.create({
   subtitle: { ...Type.footnote, marginTop: 2 },
   ranked: { flexDirection: 'row', alignItems: 'flex-end' },
   rankNumber: { fontFamily: Fonts.display, letterSpacing: -6, opacity: 0.9 },
-  wide: { borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden', justifyContent: 'flex-end' },
-  wideShade: {
-    experimental_backgroundImage: 'linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(0,0,0,0.78) 100%)',
-  },
-  wideBody: { padding: 14, gap: 6 },
-  wideTitle: { fontFamily: Fonts.heading, fontSize: 19, color: '#FFFFFF' },
-  wideMeta: { ...Type.footnote, color: 'rgba(255,255,255,0.85)' },
-  wideAccessory: { position: 'absolute', top: 10, right: 10 },
   skeletonCover: { borderRadius: RADIUS },
   skeletonLine: { height: 10, borderRadius: 5, marginTop: 10 },
 });

@@ -19,11 +19,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { IncrementButton } from '@/components/controls';
 import { Icon } from '@/components/icon';
 import { PlatformPressable } from '@/components/motion';
-import { Art } from '@/components/poster';
-import { PosterCard, WideCard } from '@/components/poster-card';
+import { Art, Poster } from '@/components/poster';
+import { PosterCard } from '@/components/poster-card';
 import { EpisodeBar } from '@/components/progress';
 import { PosterRow, RemoteShelf, Shelf } from '@/components/shelf';
 import { useAnimeHref } from '@/components/tab-context';
@@ -150,7 +149,7 @@ export function HomeScreen() {
               action={watching.length > 4 ? { label: 'See All', onPress: () => openLibrary('watching') } : undefined}>
               <PosterRow<LibraryEntry>
                 data={watching}
-                width={Math.min(300, width * 0.78)}
+                width={Math.min(320, width * 0.82)}
                 keyOf={(e) => e.id}
                 renderCard={(e, w) => <ContinueCard entry={e} width={w} />}
               />
@@ -299,25 +298,55 @@ function HeroSlide({
   );
 }
 
+/** Up-next card: poster, title, progress and a +1 button, tinted in the show's colour. */
 function ContinueCard({ entry, width }: { entry: LibraryEntry; width: number }) {
+  const { colors } = useAppTheme();
+  const href = useAnimeHref();
   const increment = useLibrary((s) => s.incrementProgress);
+  const accent = showAccent(entry.coverColor, colors.primary as string);
+  const onAccent = readableOn(accent);
   const done = entry.episodes != null && entry.progress >= entry.episodes;
+
   return (
-    <WideCard
-      anime={entry}
-      width={width}
-      progress={entry.progress}
-      total={entry.episodes}
-      accessory={
-        done ? null : (
-          <IncrementButton
-            floating
-            onPress={() => increment(entry.id)}
-            accessibilityLabel={`Mark episode ${entry.progress + 1} of ${entry.title} as watched`}
-          />
-        )
-      }
-    />
+    <View
+      style={[
+        styles.card,
+        {
+          width,
+          backgroundColor: colors.surface,
+          borderColor: withAlpha(accent, 0.35),
+          experimental_backgroundImage: `linear-gradient(120deg, ${withAlpha(accent, 0.32)} 0%, ${withAlpha(accent, 0.08)} 100%)`,
+        },
+      ]}>
+      <Link href={href(entry.id)} asChild>
+        <PlatformPressable accessibilityRole="button" accessibilityLabel={entry.title} style={styles.cardMain}>
+          <Poster uri={entry.coverUrl} color={entry.coverColor} width={78} />
+          <View style={styles.cardBody}>
+            <Text style={[Type.headline, { color: colors.text }]} numberOfLines={2}>
+              {entry.title}
+            </Text>
+            <Text style={[Type.footnote, { color: colors.textSecondary }]}>
+              {entry.progress === 0
+                ? 'Not started'
+                : `Episode ${entry.progress}${entry.episodes ? ` of ${entry.episodes}` : ''}`}
+            </Text>
+            <EpisodeBar progress={entry.progress} total={entry.episodes} color={accent} height={5} />
+          </View>
+        </PlatformPressable>
+      </Link>
+      {done ? null : (
+        <PlatformPressable
+          haptic
+          onPress={() => increment(entry.id)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`Mark episode ${entry.progress + 1} of ${entry.title} as watched`}
+          style={[styles.plusOne, { backgroundColor: accent }]}>
+          <Icon sf="plus" md="add" size={14} color={onAccent} />
+          <Text style={[Type.footnote, styles.plusOneLabel, { color: onAccent }]}>Episode {entry.progress + 1}</Text>
+        </PlatformPressable>
+      )}
+    </View>
   );
 }
 
@@ -345,6 +374,25 @@ const styles = StyleSheet.create({
   dot: { width: 6, height: 6, borderRadius: 3 },
   dotActive: { width: 18 },
   rows: { gap: 34, paddingTop: 20 },
+  card: {
+    borderRadius: 22,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    padding: 12,
+    gap: 12,
+    overflow: 'hidden',
+  },
+  cardMain: { flexDirection: 'row', gap: 14 },
+  cardBody: { flex: 1, gap: 6, justifyContent: 'center' },
+  plusOne: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    minHeight: 40,
+    borderRadius: 20,
+  },
+  plusOneLabel: { fontWeight: '700' },
   account: {
     position: 'absolute',
     right: 16,

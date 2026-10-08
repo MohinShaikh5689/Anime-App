@@ -1,7 +1,6 @@
 import { Stack, router } from 'expo-router';
 import { type PropsWithChildren, useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import Animated, { interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CharacterRow } from '@/components/character-row';
@@ -31,17 +30,6 @@ export function AnimeDetailScreen({ id }: { id: number }) {
   const [expanded, setExpanded] = useState(false);
 
   const bannerHeight = Math.round(width * 0.95);
-  const scrollY = useSharedValue(0);
-  const onScroll = useAnimatedScrollHandler((e) => {
-    scrollY.set(e.contentOffset.y);
-  });
-  const stretch = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: interpolate(scrollY.value, [-300, 0, bannerHeight], [-150, 0, bannerHeight * 0.5], 'clamp') },
-      { scale: interpolate(scrollY.value, [-300, 0], [1.6, 1], 'clamp') },
-    ],
-  }));
-
   // Library entries render instantly (and offline); details fill in when loaded.
   const anime: AnimeSummary | undefined = details ?? entry;
 
@@ -89,36 +77,35 @@ export function AnimeDetailScreen({ id }: { id: number }) {
   return (
     <View style={[styles.fill, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ title: '' }} />
-      <Animated.View style={[styles.banner, { height: bannerHeight }, stretch]} pointerEvents="none">
-        <Art uri={art} color={anime.coverColor} style={StyleSheet.absoluteFill} contentPosition="top" />
+      <ScrollView
+        style={styles.fill}
+        bounces={false}
+        overScrollMode="never"
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={{ paddingBottom: insets.bottom + 110 }}>
         <View
+          pointerEvents="none"
           style={[
-            StyleSheet.absoluteFill,
+            styles.glow,
             {
-              experimental_backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 30%, ${withAlpha(canvas, 0.2)} 55%, ${canvas} 100%)`,
+              top: bannerHeight * 0.6,
+              height: bannerHeight * 1.2,
+              experimental_backgroundImage: `linear-gradient(to bottom, ${withAlpha(accent, 0)} 0%, ${withAlpha(accent, 0.22)} 30%, ${withAlpha(canvas, 0)} 100%)`,
             },
           ]}
         />
-      </Animated.View>
-      <View
-        pointerEvents="none"
-        style={[
-          styles.glow,
-          {
-            top: bannerHeight * 0.6,
-            height: bannerHeight * 1.2,
-            experimental_backgroundImage: `linear-gradient(to bottom, ${withAlpha(accent, 0)} 0%, ${withAlpha(accent, 0.22)} 30%, ${withAlpha(canvas, 0)} 100%)`,
-          },
-        ]}
-      />
-
-      <Animated.ScrollView
-        style={styles.fill}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        contentInsetAdjustmentBehavior="never"
-        contentContainerStyle={{ paddingTop: bannerHeight * 0.55, paddingBottom: insets.bottom + 110 }}>
-        <View style={styles.hero}>
+        <View style={[styles.banner, { height: bannerHeight }]} pointerEvents="none">
+          <Art uri={art} color={anime.coverColor} style={StyleSheet.absoluteFill} contentPosition="top" />
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                experimental_backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 30%, ${withAlpha(canvas, 0.2)} 55%, ${canvas} 100%)`,
+              },
+            ]}
+          />
+        </View>
+        <View style={[styles.hero, { marginTop: -Math.round(bannerHeight * 0.45) }]}>
           <View style={styles.poster}>
             <Poster uri={anime.coverUrl} color={anime.coverColor} width={112} />
           </View>
@@ -224,7 +211,7 @@ export function AnimeDetailScreen({ id }: { id: number }) {
             <ActionButton title="Remove from Library" sf="trash" md="delete" variant="destructive" onPress={confirmRemove} />
           </View>
         ) : null}
-      </Animated.ScrollView>
+      </ScrollView>
     </View>
   );
 }
@@ -248,7 +235,7 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   flex: { flex: 1 },
   loading: { justifyContent: 'center' },
-  banner: { position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden' },
+  banner: { overflow: 'hidden' },
   glow: { position: 'absolute', left: 0, right: 0 },
   hero: { flexDirection: 'row', alignItems: 'flex-end', gap: 16, paddingHorizontal: 20 },
   poster: { borderRadius: 12, boxShadow: '0 14px 34px rgba(0,0,0,0.35)' },

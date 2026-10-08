@@ -8,7 +8,15 @@ import { BlurView } from 'expo-blur';
 import { GlassContainer, GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import * as Haptics from 'expo-haptics';
 import type { PropsWithChildren } from 'react';
-import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  type StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  type ViewStyle,
+} from 'react-native';
 
 import type {
   ActionButtonProps,
@@ -159,18 +167,39 @@ export function EpisodeStepper({ progress, episodes, onChange }: EpisodeStepperP
   );
 }
 
-export function ActionButton({ title, sf, md, variant = 'tonal', onPress }: ActionButtonProps) {
+export function ActionButton({
+  title,
+  sf,
+  md,
+  variant = 'tonal',
+  loading,
+  disabled,
+  block,
+  onPress,
+}: ActionButtonProps) {
   const { colors } = useAppTheme();
   const color =
     variant === 'primary' ? '#FFFFFF' : variant === 'destructive' ? colors.danger : colors.primary;
+  const inactive = disabled || loading;
   return (
-    <Pressable accessibilityRole="button" onPress={onPress}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!inactive, busy: !!loading }}
+      disabled={inactive}
+      onPress={onPress}
+      style={block ? styles.block : undefined}>
       <Glass
         interactive
         tint={variant === 'primary' ? (colors.primary as string) : undefined}
-        style={styles.action}>
-        {sf && md ? <Icon sf={sf} md={md} size={17} color={color} /> : null}
-        <Text style={[styles.actionLabel, { color }]}>{title}</Text>
+        style={[styles.action, disabled && styles.disabled]}>
+        {loading ? (
+          <ActivityIndicator color={color as string} />
+        ) : (
+          <>
+            {sf && md ? <Icon sf={sf} md={md} size={17} color={color} /> : null}
+            <Text style={[styles.actionLabel, { color }]}>{title}</Text>
+          </>
+        )}
       </Glass>
     </Pressable>
   );
@@ -215,6 +244,7 @@ export function Chip({ label, selected, onPress }: ChipProps) {
 
 const styles = StyleSheet.create({
   switcher: { marginHorizontal: 16 },
+  block: { alignSelf: 'stretch' },
   chip: { height: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: 'center' },
   chipLabel: { fontSize: 15, fontWeight: '500' },
   blurClip: { overflow: 'hidden' },

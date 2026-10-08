@@ -115,17 +115,33 @@ export function EpisodeStepper({ progress, episodes, onChange }: EpisodeStepperP
   );
 }
 
-export function ActionButton({ title, md, variant = 'tonal', onPress }: ActionButtonProps) {
+export function ActionButton({
+  title,
+  md,
+  variant = 'tonal',
+  loading,
+  disabled,
+  block,
+  onPress,
+}: ActionButtonProps) {
   const { colors } = useAppTheme();
+  const common = {
+    icon: md,
+    loading,
+    disabled: disabled || loading,
+    onPress,
+    style: block ? styles.block : undefined,
+    contentStyle: block ? styles.blockContent : undefined,
+  };
   if (variant === 'destructive') {
     return (
-      <Button mode="text" icon={md} textColor={colors.danger as string} onPress={onPress}>
+      <Button mode="text" textColor={colors.danger as string} {...common}>
         {title}
       </Button>
     );
   }
   return (
-    <Button mode={variant === 'primary' ? 'contained' : 'contained-tonal'} icon={md} onPress={onPress}>
+    <Button mode={variant === 'primary' ? 'contained' : 'contained-tonal'} {...common}>
       {title}
     </Button>
   );
@@ -160,6 +176,8 @@ export function Chip({ label, selected, onPress }: ChipProps) {
 
 const styles = StyleSheet.create({
   switcher: { marginHorizontal: 16 },
+  block: { alignSelf: 'stretch' },
+  blockContent: { height: 48 },
   segmentLabel: { fontSize: 13 },
   progress: { borderRadius: 2, height: 4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

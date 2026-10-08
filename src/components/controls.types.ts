@@ -27,6 +27,10 @@ export type ActionButtonProps = {
   sf?: SFSymbol;
   md?: AndroidSymbol;
   variant?: 'primary' | 'tonal' | 'destructive';
+  loading?: boolean;
+  disabled?: boolean;
+  /** Stretch to the container width. */
+  block?: boolean;
   onPress: () => void;
 };
 

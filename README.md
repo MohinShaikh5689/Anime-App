@@ -14,6 +14,21 @@ Keep anime in four lists, **Watching**, **Wishlist**, **Watched** and **Dropped*
 - **Ratings**: 1–5 stars. Tap the current star again to clear it.
 - **Offline-first library**: saved with AsyncStorage, so library entries open instantly and still work offline.
 
+## Accounts and sync (Supabase)
+
+Signing in is required. Accounts use email and password through [Supabase Auth](https://supabase.com/docs/guides/auth). The library stays on the device, so it works offline and opens instantly, and it syncs to the `library_entries` table:
+
+- Changes upload about 1.5 seconds after you make them, and again whenever the app comes to the foreground. You can also sync from **Account → Sync Now**.
+- Each anime is one row. If two devices edit the same anime, the later edit wins (`updated_at`). Removals are soft deletes (`deleted_at`), so they reach your other devices.
+- Lists made before signing in are uploaded to the first account that signs in.
+- **Account** (the person icon on Home) shows sync status and has Sign Out and **Delete Account**. The App Store requires account deletion.
+
+### Setup
+
+1. In the Supabase SQL Editor, run `supabase/migrations/0001_init.sql`, then `0002_grants_and_delete_account.sql`.
+2. Put the project URL and **publishable** key in `.env` as `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY`. Both are public by design, because row level security protects the data. Never put the `service_role` or secret key in the app.
+3. Supabase asks new users to confirm their email by default. The confirmation link opens your **Site URL** (Authentication → URL Configuration). You can turn **Confirm email** off under Authentication → Providers → Email if you don't want this step.
+
 ## Native look on each platform
 
 | | iOS | Android |

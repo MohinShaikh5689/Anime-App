@@ -44,6 +44,18 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "cdc751f6-cf63-41a0-b997-66e47e019725"
+      }
+    },
+    "owner": "mohin.shaikh",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/cdc751f6-cf63-41a0-b997-66e47e019725"
     }
   }
 }

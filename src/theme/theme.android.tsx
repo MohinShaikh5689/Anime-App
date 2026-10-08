@@ -21,6 +21,7 @@ export function useAppTheme(): AppTheme {
   return useMemo(
     () => ({
       dark: theme.dark,
+      backgroundHex: c.background,
       colors: {
         background: c.background,
         surface: c.elevation.level1,

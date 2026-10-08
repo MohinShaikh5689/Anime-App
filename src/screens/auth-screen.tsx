@@ -11,25 +11,35 @@ import {
 } from 'react-native';
 
 import { ActionButton } from '@/components/controls';
-import { Icon } from '@/components/icon';
 import { useAuthForm } from '@/screens/use-auth-form';
+import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
 
 export function AuthScreen() {
-  const { colors } = useAppTheme();
+  const { colors, dark } = useAppTheme();
   const form = useAuthForm();
   const passwordRef = useRef<TextInput>(null);
   const signUp = form.mode === 'sign-up';
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={[styles.fill, { backgroundColor: colors.background }]}>
+    <KeyboardAvoidingView
+      behavior="padding"
+      style={[
+        styles.fill,
+        {
+          backgroundColor: colors.background,
+          experimental_backgroundImage: dark
+            ? 'linear-gradient(160deg, #2B1B26 0%, #16131F 55%, #000000 100%)'
+            : 'linear-gradient(160deg, #FFE3EC 0%, #EFE9FF 55%, #F2F2F7 100%)',
+        },
+      ]}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.content}>
         <View style={styles.hero}>
           <View style={[styles.logo, { backgroundColor: colors.surface }]}>
-            <Icon sf="sparkles.tv" md="live_tv" size={40} color={colors.primary} />
+            <Text style={styles.logoEmoji}>🌸</Text>
           </View>
           <Text style={[styles.title, { color: colors.text }]}>
             {signUp ? 'Create Account' : 'Anime Tracker'}
@@ -123,13 +133,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 8,
   },
-  title: { fontSize: 34, fontWeight: '700', textAlign: 'center' },
-  subtitle: { fontSize: 17, textAlign: 'center' },
+  title: { fontFamily: Fonts.display, fontSize: 34, textAlign: 'center' },
+  subtitle: { fontFamily: Fonts.label, fontSize: 17, textAlign: 'center' },
+  logoEmoji: { fontSize: 44 },
   group: { borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden' },
   input: { fontSize: 17, paddingHorizontal: 16, height: 50 },
   separator: { height: StyleSheet.hairlineWidth, marginLeft: 16 },
   footnote: { fontSize: 13, marginHorizontal: 16 },
   message: { fontSize: 15, textAlign: 'center', marginTop: 4 },
   actions: { gap: 20, marginTop: 12, alignItems: 'center' },
-  switch: { fontSize: 15, textAlign: 'center' },
+  switch: { fontFamily: Fonts.label, fontSize: 15, textAlign: 'center' },
 });

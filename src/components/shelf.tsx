@@ -1,9 +1,11 @@
 import { type PropsWithChildren, useCallback } from 'react';
-import { FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInRight } from 'react-native-reanimated';
 
 import { PosterCard, PosterSkeleton } from '@/components/poster-card';
 import { type AnimeSummary, type BrowseOptions, browseAnime, describeAnime } from '@/lib/anilist';
 import { useRequest } from '@/lib/use-request';
+import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
 
 const CARD_WIDTH = 128;
@@ -57,7 +59,11 @@ export function PosterRow<T>({ data, renderCard, keyOf, width = CARD_WIDTH }: Po
       horizontal
       data={data}
       keyExtractor={(item) => String(keyOf(item))}
-      renderItem={({ item }) => renderCard(item, width)}
+      renderItem={({ item, index }) => (
+        <Animated.View entering={FadeInRight.delay(Math.min(index, 6) * 60).duration(450)}>
+          {renderCard(item, width)}
+        </Animated.View>
+      )}
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.row}
       ItemSeparatorComponent={RowGap}
@@ -126,11 +132,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
   },
-  title: {
-    fontSize: Platform.select({ ios: 22, default: 20 }),
-    fontWeight: Platform.select({ ios: '700', default: '500' }),
-  },
-  action: { fontSize: 15, fontWeight: '500' },
+  title: { fontFamily: Fonts.display, fontSize: 21 },
+  action: { fontFamily: Fonts.heading, fontSize: 15 },
   row: { paddingHorizontal: 16 },
   skeletons: { flexDirection: 'row', gap: GAP, overflow: 'hidden' },
   error: { paddingHorizontal: 20, paddingVertical: 24 },

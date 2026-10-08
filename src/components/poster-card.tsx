@@ -1,17 +1,25 @@
 import { Link } from 'expo-router';
-import { memo } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { memo, useEffect } from 'react';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { Icon } from '@/components/icon';
+import { PressableScale } from '@/components/motion';
 import { Poster } from '@/components/poster';
 import { useAnimeHref } from '@/components/tab-context';
 import { LISTS } from '@/constants/lists';
 import type { AnimeSummary } from '@/lib/anilist';
 import { useEntry } from '@/store/library';
+import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
 
-const isIOS = Platform.OS === 'ios';
-const RADIUS = isIOS ? 10 : 12;
+const RADIUS = Platform.OS === 'ios' ? 10 : 12;
 
 type Props = {
   anime: AnimeSummary;
@@ -39,14 +47,11 @@ export const PosterCard = memo(function PosterCard({
   return (
     <View style={{ width }}>
       <Link href={href(anime.id)} asChild>
-        <Pressable
+        <PressableScale
           accessibilityRole="button"
           accessibilityLabel={anime.title}
-          android_ripple={{ color: 'rgba(255,255,255,0.2)', foreground: true }}
-          style={({ pressed }) => [
-            styles.coverWrap,
-            isIOS && pressed && { transform: [{ scale: 0.97 }], opacity: 0.85 },
-          ]}>
+          scaleTo={0.95}
+          style={styles.coverWrap}>
           <Poster uri={anime.coverUrl} color={anime.coverColor} width={width} style={styles.cover} />
 
           {score ? (
@@ -73,7 +78,7 @@ export const PosterCard = memo(function PosterCard({
               />
             </View>
           ) : null}
-        </Pressable>
+        </PressableScale>
       </Link>
       {accessory ? (
         <View style={[styles.accessory, { top: width * 1.5 - 48 }]}>{accessory}</View>
@@ -94,14 +99,19 @@ export const PosterCard = memo(function PosterCard({
 /** Placeholder with the same footprint as a PosterCard. */
 export function PosterSkeleton({ width }: { width: number }) {
   const { colors } = useAppTheme();
+  const pulse = useSharedValue(0);
+  useEffect(() => {
+    pulse.set(withRepeat(withTiming(1, { duration: 900, easing: Easing.inOut(Easing.sin) }), -1, true));
+  }, [pulse]);
+  const animated = useAnimatedStyle(() => ({ opacity: 0.55 + pulse.value * 0.45 }));
   return (
-    <View style={{ width }}>
+    <Animated.View style={[{ width }, animated]}>
       <View
         style={[styles.cover, { width, height: width * 1.5, backgroundColor: colors.fill }]}
       />
       <View style={[styles.skeletonLine, { width: width * 0.85, backgroundColor: colors.fill }]} />
       <View style={[styles.skeletonLine, { width: width * 0.5, backgroundColor: colors.fill }]} />
-    </View>
+    </Animated.View>
   );
 }
 
@@ -116,7 +126,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   score: { top: 6, left: 6 },
-  badgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  badgeText: { color: '#FFFFFF', fontFamily: Fonts.display, fontSize: 11, fontVariant: ['tabular-nums'] },
   status: {
     position: 'absolute',
     top: 6,
@@ -139,7 +149,7 @@ const styles = StyleSheet.create({
   },
   progressBar: { height: '100%' },
   accessory: { position: 'absolute', right: 4 },
-  title: { fontSize: 13, fontWeight: '600', marginTop: 6, lineHeight: 17 },
-  subtitle: { fontSize: 12, marginTop: 2 },
+  title: { fontFamily: Fonts.heading, fontSize: 13.5, marginTop: 8, lineHeight: 17 },
+  subtitle: { fontFamily: Fonts.label, fontSize: 12, marginTop: 2 },
   skeletonLine: { height: 10, borderRadius: 5, marginTop: 8 },
 });

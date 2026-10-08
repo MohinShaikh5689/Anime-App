@@ -9,7 +9,12 @@ import type { ListStatus } from '@/constants/lists';
  */
 export type ProgressProps = { value: number; total: number | null; color?: ColorValue };
 
-export type IncrementButtonProps = { onPress: () => void; accessibilityLabel: string };
+export type IncrementButtonProps = {
+  onPress: () => void;
+  accessibilityLabel: string;
+  /** Current episode count; a "+1" pops out whenever it goes up. */
+  value?: number;
+};
 
 export type StatusPickerProps = {
   value: ListStatus | undefined;

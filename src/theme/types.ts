@@ -18,4 +18,9 @@ export type AppColors = {
   status: Record<ListStatus, ColorValue>;
 };
 
-export type AppTheme = { dark: boolean; colors: AppColors };
+export type AppTheme = {
+  dark: boolean;
+  colors: AppColors;
+  /** Plain hex of `colors.background`, for gradients that need a concrete color. */
+  backgroundHex: string;
+};

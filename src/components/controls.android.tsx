@@ -22,6 +22,7 @@ import type {
   StatusPickerProps,
 } from './controls.types';
 import { Icon } from '@/components/icon';
+import { PlusOne } from '@/components/motion';
 import { LIST_STATUSES, LISTS } from '@/constants/lists';
 import { useAppTheme } from '@/theme/theme';
 
@@ -35,15 +36,18 @@ export function Progress({ value, total, color }: ProgressProps) {
   );
 }
 
-export function IncrementButton({ onPress, accessibilityLabel }: IncrementButtonProps) {
+export function IncrementButton({ onPress, accessibilityLabel, value }: IncrementButtonProps) {
   return (
-    <IconButton
-      icon="add"
-      mode="contained-tonal"
-      size={20}
-      onPress={onPress}
-      accessibilityLabel={accessibilityLabel}
-    />
+    <View>
+      <IconButton
+        icon="add"
+        mode="contained-tonal"
+        size={20}
+        onPress={onPress}
+        accessibilityLabel={accessibilityLabel}
+      />
+      {value != null ? <PlusOne value={value} /> : null}
+    </View>
   );
 }
 

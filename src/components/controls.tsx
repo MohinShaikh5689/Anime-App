@@ -28,6 +28,7 @@ import type {
   StatusPickerProps,
 } from './controls.types';
 import { Icon } from '@/components/icon';
+import { PlusOne, PressableScale } from '@/components/motion';
 import { LIST_STATUSES, LISTS } from '@/constants/lists';
 import { useAppTheme } from '@/theme/theme';
 
@@ -74,21 +75,25 @@ export function Progress({ value, total, color }: ProgressProps) {
   );
 }
 
-export function IncrementButton({ onPress, accessibilityLabel }: IncrementButtonProps) {
+export function IncrementButton({ onPress, accessibilityLabel, value }: IncrementButtonProps) {
   const { colors } = useAppTheme();
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      hitSlop={8}
-      onPress={() => {
-        Haptics.selectionAsync();
-        onPress();
-      }}>
-      <Glass interactive style={styles.circle}>
-        <Icon sf="plus" md="add" size={18} color={colors.primary} />
-      </Glass>
-    </Pressable>
+    <View>
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        hitSlop={8}
+        scaleTo={0.88}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onPress();
+        }}>
+        <Glass interactive style={styles.circle}>
+          <Icon sf="plus" md="add" size={18} color={colors.primary} />
+        </Glass>
+      </PressableScale>
+      {value != null ? <PlusOne value={value} /> : null}
+    </View>
   );
 }
 

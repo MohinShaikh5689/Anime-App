@@ -1,11 +1,14 @@
+import { useFonts } from 'expo-font';
 import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Platform, Pressable, Text } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { useAuth } from '@/lib/supabase';
 import { useLibrary } from '@/store/library';
+import { FONT_ASSETS } from '@/theme/fonts';
 import { useStackScreenOptions } from '@/theme/stack-options';
 import { AppThemeProvider, useAppTheme } from '@/theme/theme';
 
@@ -13,10 +16,12 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   return (
-    <AppThemeProvider>
-      <StatusBar style="auto" />
-      <RootStack />
-    </AppThemeProvider>
+    <GestureHandlerRootView style={styles.fill}>
+      <AppThemeProvider>
+        <StatusBar style="auto" />
+        <RootStack />
+      </AppThemeProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -24,11 +29,13 @@ function RootStack() {
   const hydrated = useLibrary((s) => s.hydrated);
   const ready = useAuth((s) => s.ready);
   const signedIn = useAuth((s) => !!s.session);
+  const [fontsLoaded, fontError] = useFonts(FONT_ASSETS);
+  const fontsReady = fontsLoaded || !!fontError;
   const screenOptions = useStackScreenOptions();
 
   useEffect(() => {
-    if (hydrated && ready) SplashScreen.hideAsync();
-  }, [hydrated, ready]);
+    if (hydrated && ready && fontsReady) SplashScreen.hideAsync();
+  }, [hydrated, ready, fontsReady]);
 
   // The splash screen stays up until we know whether someone is signed in.
   return (
@@ -54,6 +61,8 @@ function RootStack() {
     </Stack>
   );
 }
+
+const styles = StyleSheet.create({ fill: { flex: 1 } });
 
 function DoneButton() {
   const { colors } = useAppTheme();

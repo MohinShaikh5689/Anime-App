@@ -5,7 +5,7 @@ import { Button, HelperText, Text, TextInput, useTheme, type MD3Theme } from 're
 import type { TextInput as NativeTextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Icon } from '@/components/icon';
+import { Fonts } from '@/theme/fonts';
 import { useAuthForm } from '@/screens/use-auth-form';
 
 export function AuthScreen() {
@@ -26,9 +26,9 @@ export function AuthScreen() {
         ]}>
         <View style={styles.hero}>
           <View style={[styles.logo, { backgroundColor: colors.primaryContainer }]}>
-            <Icon sf="sparkles.tv" md="live_tv" size={36} color={colors.onPrimaryContainer} />
+            <Text style={styles.logoEmoji}>🌸</Text>
           </View>
-          <Text variant="headlineMedium" style={styles.center}>
+          <Text variant="headlineMedium" style={[styles.center, styles.display]}>
             {signUp ? 'Create account' : 'Welcome back'}
           </Text>
           <Text variant="bodyLarge" style={[styles.center, { color: colors.onSurfaceVariant }]}>
@@ -116,6 +116,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   center: { textAlign: 'center' },
+  display: { fontFamily: Fonts.display },
+  logoEmoji: { fontSize: 38 },
   primary: { marginTop: 8 },
   buttonContent: { height: 48 },
 });

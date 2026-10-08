@@ -8,6 +8,7 @@ import { LIST_STATUSES, LISTS } from '@/constants/lists';
 import { supabase, useAuth } from '@/lib/supabase';
 import { syncLibrary, useSyncStatus } from '@/lib/sync';
 import { useLibrary } from '@/store/library';
+import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
 
 const isIOS = Platform.OS === 'ios';
@@ -181,17 +182,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 6,
   },
-  avatarText: { fontSize: 30, fontWeight: '700' },
-  email: { fontSize: 20, fontWeight: '600' },
-  muted: { fontSize: 14 },
+  avatarText: { fontFamily: Fonts.display, fontSize: 30 },
+  email: { fontFamily: Fonts.heading, fontSize: 20 },
+  muted: { fontFamily: Fonts.label, fontSize: 14 },
   card: { borderRadius: isIOS ? 20 : 24, borderCurve: 'continuous', padding: 16, gap: 14 },
   counts: { flexDirection: 'row' },
   count: { flex: 1, alignItems: 'center', gap: 2 },
-  countValue: { fontSize: 22, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  countLabel: { fontSize: 12 },
+  countValue: { fontFamily: Fonts.display, fontSize: 22, fontVariant: ['tabular-nums'] },
+  countLabel: { fontFamily: Fonts.label, fontSize: 12 },
   separator: { height: StyleSheet.hairlineWidth },
   syncRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  syncText: { flex: 1, fontSize: 15 },
+  syncText: { flex: 1, fontFamily: Fonts.label, fontSize: 15 },
   actions: { gap: 12 },
   danger: { alignItems: 'center', marginTop: 12 },
   center: { alignItems: 'center' },

@@ -31,7 +31,8 @@ const colors: AppTheme['colors'] = {
 
 export function useAppTheme(): AppTheme {
   const dark = useColorScheme() === 'dark';
-  return { dark, colors };
+  // systemGroupedBackground
+  return { dark, colors, backgroundHex: dark ? '#000000' : '#F2F2F7' };
 }
 
 export function AppThemeProvider({ children }: PropsWithChildren) {

@@ -24,7 +24,8 @@ export default function TabStackLayout({ segment }: { segment: string }) {
           name="index"
           options={{
             ...rootScreenOptions,
-            title: TITLES[tab],
+            // Home greets you in its content instead of a "Home" title.
+            ...(tab === 'home' ? { title: '', headerLargeTitle: false } : { title: TITLES[tab] }),
             headerRight: tab === 'home' ? () => <AccountButton /> : undefined,
           }}
         />

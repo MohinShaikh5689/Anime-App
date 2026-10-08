@@ -1,4 +1,7 @@
+import { View } from 'react-native';
+
 import AppTabs from '@/components/app-tabs';
+import { CelebrationOverlay, useFinishCelebrations } from '@/components/celebration';
 import { useAuth } from '@/lib/supabase';
 import { useLibrarySync } from '@/lib/sync';
 
@@ -10,5 +13,11 @@ export default function AppLayout() {
 
 function SyncedTabs({ userId }: { userId: string }) {
   useLibrarySync(userId);
-  return <AppTabs />;
+  useFinishCelebrations();
+  return (
+    <View style={{ flex: 1 }}>
+      <AppTabs />
+      <CelebrationOverlay />
+    </View>
+  );
 }

@@ -1,11 +1,13 @@
 import { useCallback, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Chip } from '@/components/controls';
 import { PosterCard, PosterSkeleton } from '@/components/poster-card';
 import { EmptyState, ErrorState } from '@/components/states';
 import { type AnimeSummary, type BrowseOptions, GENRES, browseAnime, formatLabel } from '@/lib/anilist';
 import { useDebouncedValue, useRequest } from '@/lib/use-request';
+import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
 
 const PADDING = 16;
@@ -105,12 +107,14 @@ export function SearchResults({ query }: { query: string }) {
       numColumns={columns}
       data={data ?? []}
       keyExtractor={(item) => String(item.id)}
-      renderItem={({ item }) => (
-        <PosterCard
-          anime={item}
-          width={cardWidth}
-          subtitle={[formatLabel(item.format), item.year].filter(Boolean).join(' · ')}
-        />
+      renderItem={({ item, index }) => (
+        <Animated.View entering={FadeIn.delay((index % (columns * 4)) * 35).duration(400)}>
+          <PosterCard
+            anime={item}
+            width={cardWidth}
+            subtitle={[formatLabel(item.format), item.year].filter(Boolean).join(' · ')}
+          />
+        </Animated.View>
       )}
       ListHeaderComponent={header}
       ListEmptyComponent={empty}
@@ -123,7 +127,7 @@ const styles = StyleSheet.create({
   columns: { gap: GAP, paddingHorizontal: PADDING },
   header: { gap: 16, paddingTop: 8 },
   chips: { gap: 8, paddingHorizontal: PADDING },
-  heading: { fontSize: 20, fontWeight: '700', marginHorizontal: PADDING + 4 },
+  heading: { fontFamily: Fonts.display, fontSize: 21, marginHorizontal: PADDING + 4 },
   skeletonGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

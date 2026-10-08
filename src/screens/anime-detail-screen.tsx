@@ -1,8 +1,9 @@
-import { Stack, router } from 'expo-router';
+import { type Href, Stack, router } from 'expo-router';
 import { type PropsWithChildren, useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ChapterRow, chapterCount, chapterTarget, ReleaseBanner, useChapters } from '@/components/chapters';
 import { CharacterRow } from '@/components/character-row';
 import { ActionButton, StatusPicker } from '@/components/controls';
 import { Icon } from '@/components/icon';
@@ -63,6 +64,9 @@ export function AnimeDetailScreen({ id }: { id: number }) {
   const recs = useRequest(`recs:${id}`, fetchRecs);
   const [expanded, setExpanded] = useState(false);
 
+  // Chapter releases for manga, matched once details (with every title) are in.
+  const chapters = useChapters(details && details.type === 'MANGA' ? chapterTarget(details, details.titles) : null);
+
   // Fresh details carry the latest airing state; keep the saved entry current.
   const hasEntry = entry != null;
   useEffect(() => {
@@ -101,6 +105,22 @@ export function AnimeDetailScreen({ id }: { id: number }) {
       },
     ]);
 
+  const openChapters = () =>
+    router.push({
+      pathname: '/chapters/[id]',
+      params: {
+        id: String(id),
+        title: anime.title,
+        titles: (details?.titles ?? [anime.title]).join('\n'),
+        country: anime.country ?? '',
+        year: anime.year ? String(anime.year) : '',
+        finished: details?.airingStatus === 'FINISHED' || details?.airingStatus === 'CANCELLED' ? '1' : '0',
+        total: anime.episodes ? String(anime.episodes) : '',
+        color: anime.coverColor ?? '',
+      },
+    } as unknown as Href);
+
+  const chapterTotal = chapterCount(chapters.data, anime.episodes, entry?.progress);
   const live = details ? pickSummary(details) : anime;
   const unaired = isUnaired(live);
   const blocked = {
@@ -253,12 +273,68 @@ export function AnimeDetailScreen({ id }: { id: number }) {
           }>
           <EpisodeTiles
             progress={entry.progress}
-            total={entry.episodes}
+            total={entry.episodes ?? chapters.data?.latest ?? null}
             aired={airedCount(live)}
             color={accent}
             unit={units.one}
             onSet={(n) => setProgress(id, n)}
           />
+        </Section>
+      ) : null}
+
+      {manga && details ? (
+        <Section
+          title="Releases"
+          accessory={
+            chapters.data?.latest ? (
+              <Pressable onPress={openChapters} hitSlop={12} accessibilityRole="button">
+                <Text style={[Type.subhead, styles.seeAll, { color: accent }]}>See All</Text>
+              </Pressable>
+            ) : null
+          }>
+          <View style={[styles.padded, styles.releases]}>
+            {chapters.loading ? (
+              <Text style={[Type.footnote, { color: colors.textSecondary }]}>Checking the latest chapters…</Text>
+            ) : chapters.error ? (
+              <Pressable onPress={chapters.retry} accessibilityRole="button">
+                <Text style={[Type.footnote, { color: colors.textSecondary }]}>
+                  {"Couldn't load chapter releases. "}
+                  <Text style={{ color: accent }}>Try again</Text>
+                </Text>
+              </Pressable>
+            ) : chapters.data?.latest ? (
+              <>
+                <ReleaseBanner data={chapters.data} accent={accent} />
+                <View>
+                  {Array.from({ length: Math.min(5, chapterTotal) }, (_, i) => {
+                    const n = chapterTotal - i;
+                    return (
+                      <ChapterRow
+                        key={n}
+                        number={n}
+                        releasedAt={chapters.data?.dates[n]}
+                        read={n <= (entry?.progress ?? 0)}
+                        accent={accent}
+                        onPress={entry ? (c) => setProgress(id, c === entry.progress ? c - 1 : c) : undefined}
+                      />
+                    );
+                  })}
+                </View>
+                <ActionButton
+                  title={`See All ${chapterTotal} Chapters`}
+                  sf="list.number"
+                  md="format_list_numbered"
+                  variant="tonal"
+                  block
+                  onPress={openChapters}
+                />
+              </>
+            ) : (
+              <Text style={[Type.footnote, { color: colors.textSecondary }]}>
+                {"Release dates aren't available for this series."}
+              </Text>
+            )}
+          </View>
         </Section>
       ) : null}
 
@@ -403,6 +479,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontFamily: Fonts.display, fontSize: 22 },
   padded: { paddingHorizontal: 20 },
+  releases: { gap: 14 },
+  seeAll: { fontWeight: '600' },
   center: { alignItems: 'center' },
   story: { lineHeight: 24 },
   more: { marginTop: 8, fontWeight: '700' },

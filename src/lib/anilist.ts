@@ -36,6 +36,8 @@ export type AnimeSummary = {
 
 export type AnimeDetails = AnimeSummary & {
   nativeTitle: string | null;
+  /** English and romaji titles, for matching on other services. */
+  titles: string[];
   bannerUrl: string | null;
   description: string | null;
   genres: string[];
@@ -378,6 +380,7 @@ export async function getAnime(id: number, signal?: AbortSignal): Promise<AnimeD
   return {
     ...toSummary(m),
     nativeTitle: m.title.native ?? null,
+    titles: [...new Set([m.title.english, m.title.romaji].filter((t): t is string => !!t))],
     bannerUrl: m.bannerImage ?? null,
     description: m.description ? cleanDescription(m.description) : null,
     genres: m.genres ?? [],

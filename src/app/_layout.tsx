@@ -60,6 +60,16 @@ function RootStack() {
           }}
         />
         <Stack.Screen
+          name="chapters/[id]"
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: [0.75, 1],
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 28,
+            sheetExpandsWhenScrolledToEdge: true,
+          }}
+        />
+        <Stack.Screen
           name="character/[id]"
           options={{
             presentation: 'formSheet',

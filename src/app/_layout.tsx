@@ -11,6 +11,7 @@ import { useLibrary } from '@/store/library';
 import { FONT_ASSETS } from '@/theme/fonts';
 import { useStackScreenOptions } from '@/theme/stack-options';
 import { AppThemeProvider, useAppTheme } from '@/theme/theme';
+import { Type } from '@/theme/type';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -78,7 +79,7 @@ function DoneButton() {
   const { colors } = useAppTheme();
   return (
     <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button">
-      <Text style={{ color: colors.primary, fontSize: 17, fontWeight: '600' }}>Done</Text>
+      <Text style={[Type.headline, { color: colors.primary }]}>Done</Text>
     </Pressable>
   );
 }

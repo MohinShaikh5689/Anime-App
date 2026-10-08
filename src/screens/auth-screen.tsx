@@ -1,4 +1,4 @@
-/** iOS sign-in: inset grouped fields and a Liquid Glass primary button. */
+/** iOS sign-in: inset grouped fields and a system filled primary button. */
 import { useRef } from 'react';
 import {
   KeyboardAvoidingView,
@@ -121,10 +121,10 @@ const styles = StyleSheet.create({
   title: { ...Type.largeTitle, textAlign: 'center' },
   subtitle: { ...Type.body, textAlign: 'center' },
   group: { borderRadius: 16, borderCurve: 'continuous', overflow: 'hidden' },
-  input: { fontSize: 17, paddingHorizontal: 16, height: 50 },
+  input: { ...Type.body, paddingHorizontal: 16, minHeight: 50 },
   separator: { height: StyleSheet.hairlineWidth, marginLeft: 16 },
-  footnote: { fontSize: 13, marginHorizontal: 16 },
-  message: { fontSize: 15, textAlign: 'center', marginTop: 4 },
+  footnote: { ...Type.footnote, marginHorizontal: 16 },
+  message: { ...Type.subhead, textAlign: 'center', marginTop: 4 },
   actions: { gap: 20, marginTop: 12, alignItems: 'center' },
   switch: { ...Type.subhead, textAlign: 'center' },
 });

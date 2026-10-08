@@ -22,7 +22,6 @@ export function useAppTheme(): AppTheme {
   return useMemo(
     () => ({
       dark: theme.dark,
-      backgroundHex: c.background,
       colors: {
         background: c.background,
         surface: c.elevation.level1,
@@ -36,7 +35,7 @@ export function useAppTheme(): AppTheme {
         // The sheet's own ruling and graphite stay fixed so the timing sheet reads on Android too.
         rule: theme.dark ? '#3B5A80' : '#8FB3DE',
         ink: theme.dark ? '#D9DCE3' : '#2B2D33',
-        key: theme.dark ? '#FF5A4E' : '#E5372B',
+        key: theme.dark ? '#FF5A4E' : '#D63027',
         status: {
           watching: c.primary,
           wishlist: c.onSurfaceVariant,

@@ -20,12 +20,13 @@ const colors: AppTheme['colors'] = {
   text: PlatformColor('label'),
   textSecondary: PlatformColor('secondaryLabel'),
   primary: tint,
-  onPrimary: '#FFFFFF',
+  // White on the light tint; deep navy on the lighter dark-mode tint for AA contrast.
+  onPrimary: DynamicColorIOS({ light: '#FFFFFF', dark: '#0B1B3A' }),
   separator: PlatformColor('separator'),
   danger: PlatformColor('systemRed'),
   rule: DynamicColorIOS({ light: '#8FB3DE', dark: '#3B5A80' }),
   ink: DynamicColorIOS({ light: '#2B2D33', dark: '#D9DCE3' }),
-  key: DynamicColorIOS({ light: '#E5372B', dark: '#FF5A4E' }),
+  key: DynamicColorIOS({ light: '#D63027', dark: '#FF5A4E' }),
   status: {
     watching: tint,
     wishlist: PlatformColor('secondaryLabel'),
@@ -36,8 +37,7 @@ const colors: AppTheme['colors'] = {
 
 export function useAppTheme(): AppTheme {
   const dark = useColorScheme() === 'dark';
-  // systemGroupedBackground
-  return { dark, colors, backgroundHex: dark ? '#000000' : '#F2F2F7' };
+  return { dark, colors };
 }
 
 export function AppThemeProvider({ children }: PropsWithChildren) {

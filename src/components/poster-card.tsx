@@ -98,7 +98,7 @@ export function PosterSkeleton({ width }: { width: number }) {
 
 const styles = StyleSheet.create({
   coverWrap: { borderRadius: RADIUS, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
-  cover: { borderRadius: RADIUS - 1 },
+  cover: { borderRadius: RADIUS },
   mark: {
     position: 'absolute',
     top: 6,

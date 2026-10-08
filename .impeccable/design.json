@@ -1,0 +1,574 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-08T13:07:25+00:00",
+  "title": "Design System: Anime Tracker",
+  "extensions": {
+    "colorMeta": {
+      "blue-pencil": {
+        "role": "primary",
+        "displayName": "Blue Pencil",
+        "canonical": "#2F6BD8",
+        "tonalRamp": [
+          "oklch(15.0% 0.115 261.1)",
+          "oklch(26.0% 0.132 261.1)",
+          "oklch(37.0% 0.150 261.1)",
+          "oklch(48.0% 0.168 261.1)",
+          "oklch(59.0% 0.172 261.1)",
+          "oklch(70.0% 0.155 261.1)",
+          "oklch(82.0% 0.135 261.1)",
+          "oklch(95.0% 0.115 261.1)"
+        ]
+      },
+      "blue-pencil-dark": {
+        "role": "primary",
+        "displayName": "Blue Pencil (dark mode)",
+        "canonical": "#7AA5F2",
+        "tonalRamp": [
+          "oklch(15.0% 0.078 261.5)",
+          "oklch(26.0% 0.090 261.5)",
+          "oklch(37.0% 0.102 261.5)",
+          "oklch(48.0% 0.115 261.5)",
+          "oklch(59.0% 0.118 261.5)",
+          "oklch(70.0% 0.106 261.5)",
+          "oklch(82.0% 0.093 261.5)",
+          "oklch(95.0% 0.078 261.5)"
+        ]
+      },
+      "key-red": {
+        "role": "secondary",
+        "displayName": "Key Red",
+        "canonical": "#D63027",
+        "tonalRamp": [
+          "oklch(15.0% 0.136 29.0)",
+          "oklch(26.0% 0.156 29.0)",
+          "oklch(37.0% 0.177 29.0)",
+          "oklch(48.0% 0.198 29.0)",
+          "oklch(59.0% 0.204 29.0)",
+          "oklch(70.0% 0.183 29.0)",
+          "oklch(82.0% 0.160 29.0)",
+          "oklch(95.0% 0.136 29.0)"
+        ]
+      },
+      "key-red-dark": {
+        "role": "secondary",
+        "displayName": "Key Red (dark mode)",
+        "canonical": "#FF5A4E",
+        "tonalRamp": [
+          "oklch(15.0% 0.130 27.8)",
+          "oklch(26.0% 0.150 27.8)",
+          "oklch(37.0% 0.170 27.8)",
+          "oklch(48.0% 0.190 27.8)",
+          "oklch(59.0% 0.195 27.8)",
+          "oklch(70.0% 0.175 27.8)",
+          "oklch(82.0% 0.153 27.8)",
+          "oklch(95.0% 0.130 27.8)"
+        ]
+      },
+      "graphite-ink": {
+        "role": "tertiary",
+        "displayName": "Graphite Ink",
+        "canonical": "#2B2D33",
+        "tonalRamp": [
+          "oklch(15.0% 0.007 271.0)",
+          "oklch(26.0% 0.008 271.0)",
+          "oklch(37.0% 0.009 271.0)",
+          "oklch(48.0% 0.011 271.0)",
+          "oklch(59.0% 0.011 271.0)",
+          "oklch(70.0% 0.010 271.0)",
+          "oklch(82.0% 0.008 271.0)",
+          "oklch(95.0% 0.007 271.0)"
+        ]
+      },
+      "graphite-ink-dark": {
+        "role": "tertiary",
+        "displayName": "Graphite Ink (dark mode)",
+        "canonical": "#D9DCE3",
+        "tonalRamp": [
+          "oklch(15.0% 0.006 267.4)",
+          "oklch(26.0% 0.007 267.4)",
+          "oklch(37.0% 0.008 267.4)",
+          "oklch(48.0% 0.009 267.4)",
+          "oklch(59.0% 0.010 267.4)",
+          "oklch(70.0% 0.009 267.4)",
+          "oklch(82.0% 0.008 267.4)",
+          "oklch(95.0% 0.006 267.4)"
+        ]
+      },
+      "non-photo-blue": {
+        "role": "neutral",
+        "displayName": "Non-Photo Blue Rule",
+        "canonical": "#8FB3DE",
+        "tonalRamp": [
+          "oklch(15.0% 0.047 253.2)",
+          "oklch(26.0% 0.054 253.2)",
+          "oklch(37.0% 0.062 253.2)",
+          "oklch(48.0% 0.069 253.2)",
+          "oklch(59.0% 0.071 253.2)",
+          "oklch(70.0% 0.064 253.2)",
+          "oklch(82.0% 0.056 253.2)",
+          "oklch(95.0% 0.047 253.2)"
+        ]
+      },
+      "non-photo-blue-dark": {
+        "role": "neutral",
+        "displayName": "Non-Photo Blue Rule (dark mode)",
+        "canonical": "#3B5A80",
+        "tonalRamp": [
+          "oklch(15.0% 0.046 254.2)",
+          "oklch(26.0% 0.054 254.2)",
+          "oklch(37.0% 0.061 254.2)",
+          "oklch(48.0% 0.068 254.2)",
+          "oklch(59.0% 0.070 254.2)",
+          "oklch(70.0% 0.063 254.2)",
+          "oklch(82.0% 0.055 254.2)",
+          "oklch(95.0% 0.046 254.2)"
+        ]
+      },
+      "on-primary": {
+        "role": "neutral",
+        "displayName": "On Primary",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "oklch(15.0% 0.000 89.9)",
+          "oklch(26.0% 0.000 89.9)",
+          "oklch(37.0% 0.000 89.9)",
+          "oklch(48.0% 0.000 89.9)",
+          "oklch(59.0% 0.000 89.9)",
+          "oklch(70.0% 0.000 89.9)",
+          "oklch(82.0% 0.000 89.9)",
+          "oklch(95.0% 0.000 89.9)"
+        ],
+        "dark": "#0B1B3A",
+        "note": "White on the light Blue Pencil tint (4.98:1); deep navy #0B1B3A on the dark-mode tint #7AA5F2 (6.89:1)."
+      },
+      "grouped-ground": {
+        "role": "neutral",
+        "displayName": "Grouped Ground (iOS systemGroupedBackground)",
+        "canonical": "#F2F2F7",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 286.3)",
+          "oklch(26.0% 0.005 286.3)",
+          "oklch(37.0% 0.006 286.3)",
+          "oklch(48.0% 0.006 286.3)",
+          "oklch(59.0% 0.006 286.3)",
+          "oklch(70.0% 0.006 286.3)",
+          "oklch(82.0% 0.005 286.3)",
+          "oklch(95.0% 0.004 286.3)"
+        ]
+      },
+      "grouped-ground-dark": {
+        "role": "neutral",
+        "displayName": "Grouped Ground (dark mode)",
+        "canonical": "#000000",
+        "tonalRamp": [
+          "oklch(15.0% 0.000 0.0)",
+          "oklch(26.0% 0.000 0.0)",
+          "oklch(37.0% 0.000 0.0)",
+          "oklch(48.0% 0.000 0.0)",
+          "oklch(59.0% 0.000 0.0)",
+          "oklch(70.0% 0.000 0.0)",
+          "oklch(82.0% 0.000 0.0)",
+          "oklch(95.0% 0.000 0.0)"
+        ]
+      },
+      "grouped-surface": {
+        "role": "neutral",
+        "displayName": "Grouped Surface (iOS secondarySystemGroupedBackground)",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "oklch(15.0% 0.000 89.9)",
+          "oklch(26.0% 0.000 89.9)",
+          "oklch(37.0% 0.000 89.9)",
+          "oklch(48.0% 0.000 89.9)",
+          "oklch(59.0% 0.000 89.9)",
+          "oklch(70.0% 0.000 89.9)",
+          "oklch(82.0% 0.000 89.9)",
+          "oklch(95.0% 0.000 89.9)"
+        ]
+      },
+      "grouped-surface-dark": {
+        "role": "neutral",
+        "displayName": "Grouped Surface (dark mode)",
+        "canonical": "#1C1C1E",
+        "tonalRamp": [
+          "oklch(15.0% 0.002 286.1)",
+          "oklch(26.0% 0.003 286.1)",
+          "oklch(37.0% 0.003 286.1)",
+          "oklch(48.0% 0.004 286.1)",
+          "oklch(59.0% 0.004 286.1)",
+          "oklch(70.0% 0.003 286.1)",
+          "oklch(82.0% 0.003 286.1)",
+          "oklch(95.0% 0.002 286.1)"
+        ]
+      },
+      "label": {
+        "role": "neutral",
+        "displayName": "Label",
+        "canonical": "#000000",
+        "tonalRamp": [
+          "oklch(15.0% 0.000 0.0)",
+          "oklch(26.0% 0.000 0.0)",
+          "oklch(37.0% 0.000 0.0)",
+          "oklch(48.0% 0.000 0.0)",
+          "oklch(59.0% 0.000 0.0)",
+          "oklch(70.0% 0.000 0.0)",
+          "oklch(82.0% 0.000 0.0)",
+          "oklch(95.0% 0.000 0.0)"
+        ]
+      },
+      "label-dark": {
+        "role": "neutral",
+        "displayName": "Label (dark mode)",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "oklch(15.0% 0.000 89.9)",
+          "oklch(26.0% 0.000 89.9)",
+          "oklch(37.0% 0.000 89.9)",
+          "oklch(48.0% 0.000 89.9)",
+          "oklch(59.0% 0.000 89.9)",
+          "oklch(70.0% 0.000 89.9)",
+          "oklch(82.0% 0.000 89.9)",
+          "oklch(95.0% 0.000 89.9)"
+        ]
+      },
+      "secondary-label": {
+        "role": "neutral",
+        "displayName": "Secondary Label",
+        "canonical": "rgba(60, 60, 67, 0.6)",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 286.0)",
+          "oklch(26.0% 0.004 286.0)",
+          "oklch(37.0% 0.004 286.0)",
+          "oklch(48.0% 0.004 286.0)",
+          "oklch(59.0% 0.004 286.0)",
+          "oklch(70.0% 0.004 286.0)",
+          "oklch(82.0% 0.004 286.0)",
+          "oklch(95.0% 0.004 286.0)"
+        ]
+      },
+      "secondary-label-dark": {
+        "role": "neutral",
+        "displayName": "Secondary Label (dark mode)",
+        "canonical": "rgba(235, 235, 245, 0.6)",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 286.0)",
+          "oklch(26.0% 0.004 286.0)",
+          "oklch(37.0% 0.004 286.0)",
+          "oklch(48.0% 0.004 286.0)",
+          "oklch(59.0% 0.004 286.0)",
+          "oklch(70.0% 0.004 286.0)",
+          "oklch(82.0% 0.004 286.0)",
+          "oklch(95.0% 0.004 286.0)"
+        ]
+      },
+      "tertiary-fill": {
+        "role": "neutral",
+        "displayName": "Tertiary Fill",
+        "canonical": "rgba(118, 118, 128, 0.12)",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 286.0)",
+          "oklch(26.0% 0.004 286.0)",
+          "oklch(37.0% 0.004 286.0)",
+          "oklch(48.0% 0.004 286.0)",
+          "oklch(59.0% 0.004 286.0)",
+          "oklch(70.0% 0.004 286.0)",
+          "oklch(82.0% 0.004 286.0)",
+          "oklch(95.0% 0.004 286.0)"
+        ]
+      },
+      "tertiary-fill-dark": {
+        "role": "neutral",
+        "displayName": "Tertiary Fill (dark mode)",
+        "canonical": "rgba(118, 118, 128, 0.24)",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 286.0)",
+          "oklch(26.0% 0.004 286.0)",
+          "oklch(37.0% 0.004 286.0)",
+          "oklch(48.0% 0.004 286.0)",
+          "oklch(59.0% 0.004 286.0)",
+          "oklch(70.0% 0.004 286.0)",
+          "oklch(82.0% 0.004 286.0)",
+          "oklch(95.0% 0.004 286.0)"
+        ]
+      },
+      "separator": {
+        "role": "neutral",
+        "displayName": "Separator",
+        "canonical": "rgba(60, 60, 67, 0.29)",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 286.0)",
+          "oklch(26.0% 0.004 286.0)",
+          "oklch(37.0% 0.004 286.0)",
+          "oklch(48.0% 0.004 286.0)",
+          "oklch(59.0% 0.004 286.0)",
+          "oklch(70.0% 0.004 286.0)",
+          "oklch(82.0% 0.004 286.0)",
+          "oklch(95.0% 0.004 286.0)"
+        ]
+      },
+      "separator-dark": {
+        "role": "neutral",
+        "displayName": "Separator (dark mode)",
+        "canonical": "rgba(84, 84, 88, 0.6)",
+        "tonalRamp": [
+          "oklch(15.0% 0.004 286.0)",
+          "oklch(26.0% 0.004 286.0)",
+          "oklch(37.0% 0.004 286.0)",
+          "oklch(48.0% 0.004 286.0)",
+          "oklch(59.0% 0.004 286.0)",
+          "oklch(70.0% 0.004 286.0)",
+          "oklch(82.0% 0.004 286.0)",
+          "oklch(95.0% 0.004 286.0)"
+        ]
+      },
+      "danger": {
+        "role": "neutral",
+        "displayName": "Danger (iOS systemRed)",
+        "canonical": "#FF3B30",
+        "tonalRamp": [
+          "oklch(15.0% 0.149 28.7)",
+          "oklch(26.0% 0.172 28.7)",
+          "oklch(37.0% 0.195 28.7)",
+          "oklch(48.0% 0.218 28.7)",
+          "oklch(59.0% 0.224 28.7)",
+          "oklch(70.0% 0.201 28.7)",
+          "oklch(82.0% 0.176 28.7)",
+          "oklch(95.0% 0.149 28.7)"
+        ]
+      },
+      "danger-dark": {
+        "role": "neutral",
+        "displayName": "Danger (dark mode)",
+        "canonical": "#FF453A",
+        "tonalRamp": [
+          "oklch(15.0% 0.143 28.3)",
+          "oklch(26.0% 0.165 28.3)",
+          "oklch(37.0% 0.187 28.3)",
+          "oklch(48.0% 0.210 28.3)",
+          "oklch(59.0% 0.216 28.3)",
+          "oklch(70.0% 0.193 28.3)",
+          "oklch(82.0% 0.169 28.3)",
+          "oklch(95.0% 0.143 28.3)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "large-title": {
+        "displayName": "Large Title",
+        "purpose": "Native large navigation titles and the sign-in heading. Android: Roboto 400, 32/40."
+      },
+      "title2": {
+        "displayName": "Title 2",
+        "purpose": "Anime title on detail, character name. Android: 400, 22/28."
+      },
+      "title3": {
+        "displayName": "Title 3",
+        "purpose": "Shelf and section headers on the sheet rule, empty-state titles. Android: 500, 20/26."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Sheet row titles, detail section titles, button labels, finish note. Android: 500, 16/24, +0.15."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Synopsis and bios. Android: 400, 16/24, +0.5."
+      },
+      "subhead": {
+        "displayName": "Subhead",
+        "purpose": "Poster titles (at 600), chips, section actions, fact labels. Android: 400, 14/20, +0.25."
+      },
+      "footnote": {
+        "displayName": "Footnote",
+        "purpose": "Poster subtitles and meta lines. Android: 400, 12/16, +0.4."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Count labels and character role lines. Android: 500, 11/16, +0.5."
+      },
+      "numeral": {
+        "displayName": "Sheet Numeral",
+        "purpose": "Barlow Condensed SemiBold, tabular: EP readout (16-17), frame numbers (17), rank (16), pager, numeric facts (18). Numerals only."
+      },
+      "numeral-display": {
+        "displayName": "Sheet Numeral Display",
+        "purpose": "Barlow Condensed SemiBold, tabular: stepper count (28), account counts (26), AniList score (22)."
+      }
+    },
+    "shadows": [
+      {
+        "name": "finish-note",
+        "value": "0 6px 18px rgba(0,0,0,0.12)",
+        "purpose": "The transient 'Finished \u00b7 title' note; the only shadow in the system."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ink-sweep",
+        "value": "scaleX 0\u21921 from left, 420ms, Easing.out(Easing.exp)",
+        "purpose": "Inks the just-watched frame cell. Reduce Motion: 200ms opacity crossfade."
+      },
+      {
+        "name": "check-short-stroke",
+        "value": "scaleX 0\u21921, 160ms, Easing.out(Easing.cubic)",
+        "purpose": "First (short) leg of the finish check."
+      },
+      {
+        "name": "check-long-stroke",
+        "value": "scaleY 0\u21921, 260ms after 150ms delay, Easing.out(Easing.cubic)",
+        "purpose": "Second (long) leg of the finish check. Reduce Motion: 200ms fade-in of the whole check."
+      },
+      {
+        "name": "finish-note",
+        "value": "FadeInUp 280ms / FadeOutUp 220ms, dismissed after 2600ms",
+        "purpose": "Enter and exit of the 'Finished \u00b7 title' note; the check fades out over 260ms."
+      },
+      {
+        "name": "press",
+        "value": "opacity 0.6 (iOS); ripple rgba(127,127,127,0.18) foreground (Android)",
+        "purpose": "Platform press feedback for custom pressables."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "grid-columns",
+        "value": "columns = max(3, floor((width - 32 + 12) / (144 + 12)))"
+      },
+      {
+        "name": "frame-sheet-columns",
+        "value": "columns = max(5, floor((width + 6) / (48 + 6)))"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Filled Blue Pencil action for sign-in and the blank-sheet Find Anime.",
+      "html": "<button class=\"ds-btn-primary\">Find Anime</button>",
+      "css": ".ds-btn-primary { font-family: -apple-system, BlinkMacSystemFont, Roboto, system-ui, sans-serif; display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:48px; padding:0 20px; border:none; border-radius:14px; background:#2F6BD8; color:#FFFFFF; font-size:17px; font-weight:600; letter-spacing:-0.43px; cursor:pointer; transition:opacity .15s; } .ds-btn-primary:hover { opacity:.85; } .ds-btn-primary:active { opacity:.6; } .ds-btn-primary:focus-visible { outline:2px solid #2F6BD8; outline-offset:3px; }"
+    },
+    {
+      "name": "Tonal Button",
+      "kind": "button",
+      "refersTo": "button-tonal",
+      "description": "Default action: system fill with Blue Pencil label (Start Watching, Sync Now).",
+      "html": "<button class=\"ds-btn-tonal\">Start Watching</button>",
+      "css": ".ds-btn-tonal { font-family: -apple-system, BlinkMacSystemFont, Roboto, system-ui, sans-serif; display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:0 20px; border:none; border-radius:14px; background:rgba(118,118,128,0.12); color:#2F6BD8; font-size:17px; font-weight:600; letter-spacing:-0.43px; cursor:pointer; transition:opacity .15s; } .ds-btn-tonal:hover { background:rgba(118,118,128,0.18); } .ds-btn-tonal:active { opacity:.6; } .ds-btn-tonal:focus-visible { outline:2px solid #2F6BD8; outline-offset:3px; }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Transparent text button in system red for Sign Out, Delete Account, Remove.",
+      "html": "<button class=\"ds-btn-destructive\">Remove from Library</button>",
+      "css": ".ds-btn-destructive { font-family: -apple-system, BlinkMacSystemFont, Roboto, system-ui, sans-serif; min-height:48px; padding:0 20px; border:none; border-radius:14px; background:transparent; color:#FF3B30; font-size:17px; font-weight:600; cursor:pointer; } .ds-btn-destructive:hover { background:rgba(255,59,48,0.08); } .ds-btn-destructive:active { opacity:.6; } .ds-btn-destructive:focus-visible { outline:2px solid #FF3B30; outline-offset:3px; }"
+    },
+    {
+      "name": "Genre Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "34px pill filter on Search; selected fills Blue Pencil.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip ds-chip-selected\">Trending</button><button class=\"ds-chip\">Action</button><button class=\"ds-chip\">Slice of Life</button></div>",
+      "css": ".ds-chips { display:flex; gap:8px; } .ds-chip { font-family: -apple-system, BlinkMacSystemFont, Roboto, system-ui, sans-serif; min-height:34px; padding:0 14px; border:none; border-radius:17px; background:rgba(118,118,128,0.12); color:#000; font-size:15px; letter-spacing:-0.23px; cursor:pointer; } .ds-chip:hover { background:rgba(118,118,128,0.2); } .ds-chip:active { opacity:.6; } .ds-chip:focus-visible { outline:2px solid #2F6BD8; outline-offset:2px; } .ds-chip-selected { background:#2F6BD8; color:#fff; } .ds-chip-selected:hover { background:#2F6BD8; }"
+    },
+    {
+      "name": "Section Header",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "Title on a Non-Photo Blue baseline rule with an optional tint action.",
+      "html": "<div class=\"ds-section-head\"><h3>Trending now</h3><a href=\"#\">See All</a></div>",
+      "css": ".ds-section-head { font-family: -apple-system, BlinkMacSystemFont, Roboto, system-ui, sans-serif; display:flex; align-items:baseline; justify-content:space-between; padding-bottom:8px; border-bottom:1px solid #8FB3DE; max-width:360px; } .ds-section-head h3 { margin:0; font-size:20px; font-weight:600; letter-spacing:-0.45px; color:#000; } .ds-section-head a { font-size:15px; color:#2F6BD8; text-decoration:none; } .ds-section-head a:hover { text-decoration:underline; } .ds-section-head a:focus-visible { outline:2px solid #2F6BD8; outline-offset:2px; }"
+    },
+    {
+      "name": "Sheet Row",
+      "kind": "card",
+      "refersTo": "sheet-group",
+      "description": "Home 'On the sheet' row: cover, title, EP readout, frame strip, trailing +1.",
+      "html": "<div class=\"ds-sheet\"><div class=\"ds-row\"><div class=\"ds-cover\"></div><div class=\"ds-body\"><div class=\"ds-top\"><span class=\"ds-title\">Frieren: Beyond Journey's End</span><span class=\"ds-readout\"><span class=\"ds-dim\">EP </span>06<span class=\"ds-dim\"> / 12</span></span></div><div class=\"ds-strip\"><i class=\"w\"></i><i class=\"w\"></i><i class=\"w\"></i><i class=\"w\"></i><i class=\"w\"></i><i class=\"w\"></i><i class=\"n\"></i><i></i><i></i><i></i><i></i><i></i></div></div><button class=\"ds-plus\" aria-label=\"Mark episode 7 as watched\">+</button></div></div>",
+      "css": ".ds-sheet { font-family: -apple-system, BlinkMacSystemFont, Roboto, system-ui, sans-serif; background:#fff; border-radius:14px; max-width:380px; overflow:hidden; } .ds-row { display:flex; align-items:center; gap:12px; padding:12px 8px 12px 12px; } .ds-cover { width:48px; height:72px; border-radius:10px; background:#9aa7c7; flex:none; } .ds-body { flex:1; display:flex; flex-direction:column; gap:8px; } .ds-top { display:flex; gap:8px; align-items:flex-start; } .ds-title { flex:1; font-size:17px; font-weight:600; letter-spacing:-0.43px; color:#000; } .ds-readout { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-variant-numeric: tabular-nums; font-size:16px; letter-spacing:.2px; color:#000; } .ds-dim { color:rgba(60,60,67,.6); } .ds-strip { display:flex; gap:2px; height:10px; } .ds-strip i { flex:1; border-radius:2px; border:1px solid #8FB3DE; } .ds-strip i.w { background:#2B2D33; border-color:#2B2D33; } .ds-strip i.n { border:1.5px solid #D63027; } .ds-plus { width:40px; height:40px; border-radius:20px; border:none; background:rgba(118,118,128,.12); color:#2F6BD8; font-size:22px; cursor:pointer; flex:none; } .ds-plus:hover { background:rgba(118,118,128,.2); } .ds-plus:active { opacity:.6; } .ds-plus:focus-visible { outline:2px solid #2F6BD8; outline-offset:2px; }"
+    },
+    {
+      "name": "Frame Sheet",
+      "kind": "custom",
+      "refersTo": "frame-sheet-frame",
+      "description": "Detail page grid of numbered frames: inked, next (key red), and ruled.",
+      "html": "<div class=\"ds-frames\"><button class=\"ds-f w\">1</button><button class=\"ds-f w\">2</button><button class=\"ds-f w\">3</button><button class=\"ds-f n\">4</button><button class=\"ds-f\">5</button><button class=\"ds-f\">6</button><button class=\"ds-f\">7</button><button class=\"ds-f\">8</button><button class=\"ds-f\">9</button><button class=\"ds-f\">10</button></div>",
+      "css": ".ds-frames { display:grid; grid-template-columns:repeat(5, 1fr); gap:6px; max-width:320px; padding:16px; background:#fff; border-radius:14px; } .ds-f { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-variant-numeric: tabular-nums; min-height:44px; aspect-ratio:1/0.72; border-radius:4px; border:1px solid #8FB3DE; background:transparent; color:rgba(60,60,67,.6); font-size:17px; cursor:pointer; } .ds-f.w { background:#2B2D33; border-color:#2B2D33; color:#F2F2F7; } .ds-f.n { border:2px solid #D63027; color:#D63027; } .ds-f:active { opacity:.6; } .ds-f:hover { border-color:#2F6BD8; } .ds-f:focus-visible { outline:2px solid #2F6BD8; outline-offset:2px; }"
+    },
+    {
+      "name": "Poster Card",
+      "kind": "card",
+      "refersTo": "poster-card",
+      "description": "Cover-first card with rule border, graphite status badge, rank numeral and meta.",
+      "html": "<a href=\"#\" class=\"ds-poster\"><span class=\"ds-art\"><span class=\"ds-badge\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"#F2F2F7\"><path d=\"M8 5v14l11-7z\"/></svg></span></span><span class=\"ds-pt\"><span class=\"ds-rank\">03</span><span>Kusuriya no Hitorigoto</span></span><span class=\"ds-ps\">TV \u00b7 8.9/10</span></a>",
+      "css": ".ds-poster { font-family: -apple-system, BlinkMacSystemFont, Roboto, system-ui, sans-serif; display:flex; flex-direction:column; width:124px; text-decoration:none; } .ds-art { position:relative; display:block; width:124px; height:186px; border-radius:8px; border:0.5px solid #8FB3DE; background:#6d7fa8; transition:opacity .15s; } .ds-poster:hover .ds-art { opacity:.85; } .ds-poster:active .ds-art { opacity:.6; } .ds-poster:focus-visible { outline:2px solid #2F6BD8; outline-offset:3px; border-radius:8px; } .ds-badge { position:absolute; top:6px; right:6px; width:22px; height:22px; border-radius:11px; background:#2B2D33; display:flex; align-items:center; justify-content:center; } .ds-pt { display:flex; gap:6px; margin-top:8px; font-size:15px; font-weight:600; line-height:19px; color:#000; } .ds-rank { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-variant-numeric: tabular-nums; font-size:16px; color:rgba(60,60,67,.6); } .ds-ps { margin-top:2px; font-size:13px; color:rgba(60,60,67,.6); }"
+    },
+    {
+      "name": "Finish Check",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "Key Red two-stroke check with the 'Finished \u00b7 title' note.",
+      "html": "<div class=\"ds-finish\"><div class=\"ds-note\"><span class=\"ds-dim\">Finished \u00b7 </span>Frieren</div><div class=\"ds-check\"><span class=\"s\"></span><span class=\"l\"></span></div></div>",
+      "css": ".ds-finish { font-family: -apple-system, BlinkMacSystemFont, Roboto, system-ui, sans-serif; display:flex; flex-direction:column; align-items:center; gap:28px; padding:16px; } .ds-note { padding:10px 16px; border-radius:14px; background:#fff; border:1px solid #8FB3DE; box-shadow:0 6px 18px rgba(0,0,0,.12); font-size:17px; font-weight:600; color:#000; } .ds-dim { color:rgba(60,60,67,.6); } .ds-check { position:relative; width:44px; height:92px; transform:rotate(45deg) translateX(-12px); } .ds-check span { position:absolute; bottom:0; background:#D63027; border-radius:5px; } .ds-check .s { left:0; width:44px; height:10px; transform-origin:left; animation:ds-s .16s ease-out both; } .ds-check .l { right:0; width:10px; height:92px; transform-origin:bottom; animation:ds-l .26s .15s ease-out both; } .ds-finish:hover .ds-check span { animation-play-state:running; } @keyframes ds-s { from { transform:scaleX(0); } } @keyframes ds-l { from { transform:scaleY(0); } } @media (prefers-reduced-motion: reduce) { .ds-check span { animation:none; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Timing Sheet",
+    "overview": "**Creative North Star: \"The Timing Sheet\"**\n\nThe app is drawn as an anime production dope sheet laid over the platform's own ground. Every show the user follows is a sheet in progress: episodes are frames, watched frames are inked in graphite, the next frame is outlined in key red, and the rest wait as non-photo-blue ruled cells. Sections and lists sit on blue hairline rules the way columns sit on a timing sheet. When a show is finished on the device, a key-red check is drawn in two pencil strokes, the director's approval on a cleared cut.\n\nEverything that is not the sheet stays native. On iOS the ground is the system grouped background with semantic UIKit colors, large titles, SF text styles, native tabs and Liquid Glass chrome on iOS 26 (system material blur below). On Android the ground is Material 3 with Material You dynamic colour, Roboto in the M3 type scale, Paper components and the M3 navigation bar. Only the sheet's own three inks (ruling, graphite, key red) and its numeral face are held constant across both platforms, so the timing sheet reads as the same object on either phone.\n\nDensity is calm and grouped: one ruled list of current shows, one pick for tonight, then horizontally scrolling shelves. Cover art is the only imagery and the only saturated colour on a card. Motion is platform transitions and press highlights, plus exactly two authored moments: the ink sweep on a frame and the check strokes.",
+    "keyCharacteristics": [
+      "Native system ground and chrome per platform; the sheet layer is the identity.",
+      "Non-photo-blue hairline rules structure sections, rows and frame cells.",
+      "Graphite ink for progress; key red for the next frame and the finish check only.",
+      "Barlow Condensed for episode, frame, rank and count numerals only, always tabular.",
+      "Covers are the only imagery: no gradients, no blurred backdrops, no emoji.",
+      "Two authored motions, both with Reduce Motion crossfades."
+    ],
+    "rules": [
+      {
+        "name": "The Two Jobs Rule",
+        "body": "Key red marks the next frame and the finish check. It never appears on a button, badge, heading, score, error or selection state.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ruled Sheet Rule",
+        "body": "Structure is drawn with Non-Photo Blue hairlines (two device hairlines thick), not boxes, fills or shadows. Platform separators remain only inside native-style groups that are not part of the sheet.",
+        "section": "colors"
+      },
+      {
+        "name": "The Cover Is The Colour Rule",
+        "body": "A card's only saturated colour comes from its cover art. Card chrome stays in rules, fills and text colours.",
+        "section": "colors"
+      },
+      {
+        "name": "The Measurement Only Rule",
+        "body": "Barlow Condensed sets numerals that measure something: episodes, frames, ranks, counts, scores. Words, headings, labels and buttons are never set in it, including \"OK\"-style stamps.",
+        "section": "typography"
+      },
+      {
+        "name": "The Zero-Padded Readout Rule",
+        "body": "Episode progress and ranks pad to two digits (\"EP 06\", \"03\") and use tabular figures so columns align down a list.",
+        "section": "typography"
+      },
+      {
+        "name": "The Glass Is Chrome Rule",
+        "body": "Liquid Glass is used only for system chrome and the one floating control, the +1 over a cover in the Library grid. In-content buttons use system filled and tinted styles.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do draw progress with the Frame Strip or Frame Sheet wherever a watched show appears.",
+      "Do separate sections and sheet rows with Non-Photo Blue hairlines ({colors.non-photo-blue}, two hairlines thick).",
+      "Do set every episode, frame, rank, count and score numeral in Barlow Condensed 600 with tabular figures, and every word in the platform text styles.",
+      "Do keep chrome native: system tabs, large titles, Liquid Glass on iOS 26, Material 3 and dynamic colour on Android.",
+      "Do give every authored motion a Reduce Motion crossfade."
+    ],
+    "donts": [
+      "Don't use Key Red for anything other than the next frame and the finish check.",
+      "Don't add imagery beyond cover art and character portraits: no gradients, blurred cover backdrops or emoji.",
+      "Don't set words, labels or stamps in Barlow Condensed.",
+      "Don't use Liquid Glass for in-content buttons or cards; it belongs to chrome and the floating +1.",
+      "Don't add shadows to cards or covers; the only shadow is the transient finish note."
+    ]
+  }
+}

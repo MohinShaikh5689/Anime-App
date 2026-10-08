@@ -19,14 +19,9 @@ export type AppColors = {
   rule: ColorValue;
   /** Graphite: inked (watched) frames. */
   ink: ColorValue;
-  /** Key red, reserved for the next frame and the OK approval mark. Nothing else. */
+  /** Key red, reserved for the next frame and the finish check. Nothing else. */
   key: ColorValue;
   status: Record<ListStatus, ColorValue>;
 };
 
-export type AppTheme = {
-  dark: boolean;
-  colors: AppColors;
-  /** Plain hex of `colors.background`, for gradients that need a concrete color. */
-  backgroundHex: string;
-};
+export type AppTheme = { dark: boolean; colors: AppColors };

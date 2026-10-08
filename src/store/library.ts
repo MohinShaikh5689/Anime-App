@@ -19,6 +19,9 @@ export type LibraryEntry = AnimeSummary & {
 /** A row of `public.library_entries` in Supabase. */
 export type RemoteEntry = {
   anime_id: number;
+  /** ANIME or MANGA; null on rows written before manga support. */
+  media_type?: string | null;
+  country?: string | null;
   title: string;
   cover_url: string | null;
   cover_color: string | null;
@@ -99,6 +102,8 @@ export function toRemote(entry: LibraryEntry, userId: string) {
   return {
     user_id: userId,
     anime_id: entry.id,
+    media_type: entry.type ?? 'ANIME',
+    country: entry.country ?? null,
     title: entry.title,
     cover_url: entry.coverUrl,
     cover_color: entry.coverColor,
@@ -118,6 +123,8 @@ export function toRemote(entry: LibraryEntry, userId: string) {
 function fromRemote(row: RemoteEntry): LibraryEntry {
   return {
     id: row.anime_id,
+    type: row.media_type === 'MANGA' ? 'MANGA' : 'ANIME',
+    country: row.country ?? null,
     title: row.title,
     coverUrl: row.cover_url,
     coverColor: row.cover_color,
@@ -265,6 +272,11 @@ export const useLibrary = create<LibraryState>()(
               } else {
                 const entry = fromRemote(row);
                 if (local) for (const key of LOCAL_META) (entry as Record<string, unknown>)[key] = local[key];
+                // Before migration 0003 the server has no media type; keep what this device knows.
+                if (local && row.media_type == null) {
+                  entry.type = local.type;
+                  entry.country = local.country;
+                }
                 entries = { ...entries, [id]: entry };
               }
               dirty = withoutKey(dirty, id);

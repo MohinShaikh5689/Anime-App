@@ -22,8 +22,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/icon';
 import { PlatformPressable } from '@/components/motion';
-import { Art, Poster } from '@/components/poster';
+import { Art } from '@/components/poster';
 import { PosterCard } from '@/components/poster-card';
+import { ContinueCard } from '@/components/continue-card';
 import { EpisodeBar } from '@/components/progress';
 import { AnimeShelf, PosterRow, Shelf } from '@/components/shelf';
 import { useAnimeHref } from '@/components/tab-context';
@@ -31,14 +32,18 @@ import type { ListStatus } from '@/constants/lists';
 import {
   type AnimeSummary,
   currentSeason,
-  formatLabel,
   getHomeFeed,
   getRecommendations,
+  isManga,
+  kindOf,
+  type MediaKind,
+  mediaLabel,
   nextSeason,
   pickSummary,
   seasonLabel,
+  unitsOf,
 } from '@/lib/anilist';
-import { isCaughtUp, isComplete, isUnaired, maxProgress, nextEpisodeLabel, premiereLabel } from '@/lib/airing';
+import { isComplete, isUnaired, maxProgress, nextEpisodeLabel, premiereLabel } from '@/lib/airing';
 import { readableOn, showAccent, withAlpha } from '@/lib/color';
 import { useRequest } from '@/lib/use-request';
 import { type LibraryEntry, useLibrary } from '@/store/library';
@@ -52,8 +57,9 @@ const NEXT_SEASON = nextSeason();
 
 type HeroItem = { anime: AnimeSummary; entry?: LibraryEntry };
 
-function openLibrary(list: ListStatus) {
+function openLibrary(list: ListStatus, kind?: MediaKind) {
   useUi.getState().setLibraryList(list);
+  if (kind) useUi.getState().setLibraryKind(kind);
   router.navigate('/(library)' as Href);
 }
 
@@ -66,7 +72,7 @@ export function HomeScreen() {
 
   const feed = useRequest('home:feed', getHomeFeed);
 
-  const { watching, wishlist, finished, seed, hero } = useMemo(() => {
+  const { watching, reading, wishlist, finished, seed, hero } = useMemo(() => {
     const all = Object.values(entries).sort((a, b) => b.updatedAt - a.updatedAt);
     const watchingList = all.filter((e) => e.status === 'watching');
     const wishlistList = all.filter((e) => e.status === 'wishlist');
@@ -75,7 +81,7 @@ export function HomeScreen() {
     const seedEntry =
       [...finishedList].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))[0] ?? watchingList[0] ?? wishlistList[0];
     const mine: HeroItem[] = [
-      ...watchingList.filter((e) => e.episodes == null || e.progress < e.episodes),
+      ...watchingList.filter((e) => !isComplete(e, e.progress)),
       ...wishlistList,
     ]
       .slice(0, 5)
@@ -85,7 +91,8 @@ export function HomeScreen() {
       .slice(0, Math.max(0, 6 - mine.length))
       .map((a) => ({ anime: a }));
     return {
-      watching: watchingList,
+      watching: watchingList.filter((e) => !isManga(e)),
+      reading: watchingList.filter(isManga),
       wishlist: wishlistList,
       finished: finishedList,
       seed: seedEntry,
@@ -169,7 +176,7 @@ export function HomeScreen() {
           {watching.length > 0 ? (
             <Shelf
               title="Continue Watching"
-              action={watching.length > 4 ? { label: 'See All', onPress: () => openLibrary('watching') } : undefined}>
+              action={watching.length > 4 ? { label: 'See All', onPress: () => openLibrary('watching', 'anime') } : undefined}>
               <PosterRow<LibraryEntry>
                 data={watching}
                 width={Math.min(320, width * 0.82)}
@@ -179,8 +186,21 @@ export function HomeScreen() {
             </Shelf>
           ) : null}
 
+          {reading.length > 0 ? (
+            <Shelf
+              title="Continue Reading"
+              action={reading.length > 4 ? { label: 'See All', onPress: () => openLibrary('watching', kindOf(reading[0])) } : undefined}>
+              <PosterRow<LibraryEntry>
+                data={reading}
+                width={Math.min(320, width * 0.82)}
+                keyOf={(e) => e.id}
+                renderCard={(e, w) => <ContinueCard entry={e} width={w} />}
+              />
+            </Shelf>
+          ) : null}
+
           {wishlist.length > 0 ? (
-            <Shelf title="Your Wishlist" action={{ label: 'See All', onPress: () => openLibrary('wishlist') }}>
+            <Shelf title="Your Wishlist" action={{ label: 'See All', onPress: () => openLibrary('wishlist', kindOf(wishlist[0])) }}>
               <PosterRow<LibraryEntry>
                 data={wishlist}
                 keyOf={(e) => e.id}
@@ -188,7 +208,7 @@ export function HomeScreen() {
                   <PosterCard
                     anime={e}
                     width={w}
-                    subtitle={[formatLabel(e.format), e.year].filter(Boolean).join(' · ')}
+                    subtitle={[mediaLabel(e), e.year].filter(Boolean).join(' · ')}
                   />
                 )}
               />
@@ -207,10 +227,11 @@ export function HomeScreen() {
           <AnimeShelf title="Airing Now" data={feed.data?.airing} error={feed.error} onRetry={feed.retry} />
           <AnimeShelf title={`New in ${seasonLabel(SEASON)}`} data={feed.data?.season} error={feed.error} onRetry={feed.retry} />
           <AnimeShelf title={`Coming in ${seasonLabel(NEXT_SEASON)}`} data={feed.data?.upcoming} error={feed.error} onRetry={feed.retry} />
+          <AnimeShelf title="Trending Manhwa" data={feed.data?.manhwa} error={feed.error} onRetry={feed.retry} />
           <AnimeShelf title="Movie Night" data={feed.data?.movies} error={feed.error} onRetry={feed.retry} />
           <AnimeShelf title="Edge-of-Your-Seat Action" data={feed.data?.action} error={feed.error} onRetry={feed.retry} />
           {finished.length > 0 ? (
-            <Shelf title="Finished by You" action={{ label: 'See All', onPress: () => openLibrary('watched') }}>
+            <Shelf title="Finished by You" action={{ label: 'See All', onPress: () => openLibrary('watched', kindOf(finished[0])) }}>
               <PosterRow<LibraryEntry>
                 data={finished}
                 keyOf={(e) => e.id}
@@ -221,6 +242,7 @@ export function HomeScreen() {
             </Shelf>
           ) : null}
           <AnimeShelf title="Feel-Good Slice of Life" data={feed.data?.sliceOfLife} error={feed.error} onRetry={feed.retry} />
+          <AnimeShelf title="Manga Everyone's Reading" data={feed.data?.manga} error={feed.error} onRetry={feed.retry} />
           <AnimeShelf title="Romance Picks" data={feed.data?.romance} error={feed.error} onRetry={feed.retry} />
           <AnimeShelf title="Highest Rated Ever" data={feed.data?.topRated} error={feed.error} onRetry={feed.retry} />
           <AnimeShelf title="All-Time Favorites" data={feed.data?.allTime} error={feed.error} onRetry={feed.retry} />
@@ -270,6 +292,7 @@ function HeroSlide({
 
   const watching = entry?.status === 'watching';
   const nextEp = (entry?.progress ?? 0) + 1;
+  const units = unitsOf(anime);
   const waiting = watching
     ? entry.progress >= maxProgress(anime)
     : entry?.status === 'wishlist' && isUnaired(anime);
@@ -280,10 +303,10 @@ function HeroSlide({
         md: 'event',
       }
     : watching
-    ? { label: `Log Episode ${nextEp}`, sf: 'checkmark' as const, md: 'check' as const, run: () => increment(anime.id) }
+    ? { label: `Log ${units.one} ${nextEp}`, sf: 'checkmark' as const, md: 'check' as const, run: () => increment(anime.id) }
     : entry?.status === 'wishlist'
       ? {
-          label: 'Start Watching',
+          label: units.start,
           sf: 'play.fill' as const,
           md: 'play_arrow' as const,
           run: () => setStatus(entry, 'watching'),
@@ -294,7 +317,7 @@ function HeroSlide({
           md: 'add' as const,
           run: () => setStatus(pickSummary(anime), 'wishlist'),
         };
-  const kicker = watching ? 'Continue watching' : entry?.status === 'wishlist' ? 'From your wishlist' : 'Trending now';
+  const kicker = watching ? `Continue ${units.verb.toLowerCase()}` : entry?.status === 'wishlist' ? 'From your wishlist' : 'Trending now';
 
   return (
     <View style={{ width, height, overflow: 'hidden' }}>
@@ -319,9 +342,9 @@ function HeroSlide({
         </Link>
         <Text style={[Type.subhead, { color: colors.textSecondary }]} numberOfLines={1}>
           {[
-            formatLabel(anime.format),
+            mediaLabel(anime),
             anime.year,
-            anime.episodes ? `${anime.episodes} episodes` : null,
+            anime.episodes ? `${anime.episodes} ${units.many}` : null,
             anime.averageScore ? `${anime.averageScore}% rating` : null,
           ]
             .filter(Boolean)
@@ -364,64 +387,6 @@ function HeroSlide({
   );
 }
 
-/** Up-next card: poster, title, progress and a +1 button, tinted in the show's colour. */
-function ContinueCard({ entry, width }: { entry: LibraryEntry; width: number }) {
-  const { colors } = useAppTheme();
-  const href = useAnimeHref();
-  const increment = useLibrary((s) => s.incrementProgress);
-  const accent = showAccent(entry.coverColor, colors.primary as string);
-  const onAccent = readableOn(accent);
-  const done = isComplete(entry, entry.progress);
-  const caughtUp = isCaughtUp(entry, entry.progress);
-
-  return (
-    <View
-      style={[
-        styles.card,
-        {
-          width,
-          backgroundColor: colors.surface,
-          borderColor: withAlpha(accent, 0.35),
-          experimental_backgroundImage: `linear-gradient(120deg, ${withAlpha(accent, 0.32)} 0%, ${withAlpha(accent, 0.08)} 100%)`,
-        },
-      ]}>
-      <Link href={href(entry.id)} asChild>
-        <PlatformPressable accessibilityRole="button" accessibilityLabel={entry.title} style={styles.cardMain}>
-          <Poster uri={entry.coverUrl} color={entry.coverColor} width={78} />
-          <View style={styles.cardBody}>
-            <Text style={[Type.headline, { color: colors.text }]} numberOfLines={2}>
-              {entry.title}
-            </Text>
-            <Text style={[Type.footnote, { color: colors.textSecondary }]}>
-              {entry.progress === 0
-                ? 'Not started'
-                : `Episode ${entry.progress}${entry.episodes ? ` of ${entry.episodes}` : ''}`}
-            </Text>
-            <EpisodeBar progress={entry.progress} total={entry.episodes} color={accent} height={5} />
-          </View>
-        </PlatformPressable>
-      </Link>
-      {done ? null : caughtUp ? (
-        <View style={[styles.plusOne, { backgroundColor: withAlpha(accent, 0.16) }]}>
-          <Icon sf="calendar" md="event" size={14} color={accent} />
-          <Text style={[Type.footnote, styles.plusOneLabel, { color: colors.text }]}>{nextEpisodeLabel(entry)}</Text>
-        </View>
-      ) : (
-        <PlatformPressable
-          haptic
-          onPress={() => increment(entry.id)}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={`Mark episode ${entry.progress + 1} of ${entry.title} as watched`}
-          style={[styles.plusOne, { backgroundColor: accent }]}>
-          <Icon sf="plus" md="add" size={14} color={onAccent} />
-          <Text style={[Type.footnote, styles.plusOneLabel, { color: onAccent }]}>Episode {entry.progress + 1}</Text>
-        </PlatformPressable>
-      )}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   glow: { position: 'absolute', left: 0, right: 0 },
@@ -446,25 +411,6 @@ const styles = StyleSheet.create({
   dot: { width: 6, height: 6, borderRadius: 3 },
   dotActive: { width: 18 },
   rows: { gap: 34, paddingTop: 20 },
-  card: {
-    borderRadius: 22,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    padding: 12,
-    gap: 12,
-    overflow: 'hidden',
-  },
-  cardMain: { flexDirection: 'row', gap: 14 },
-  cardBody: { flex: 1, gap: 6, justifyContent: 'center' },
-  plusOne: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    minHeight: 40,
-    borderRadius: 20,
-  },
-  plusOneLabel: { fontWeight: '700' },
   account: { position: 'absolute', right: 16 },
   accountButton: {
     width: 44,

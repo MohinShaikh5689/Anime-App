@@ -2,7 +2,7 @@ import { type PropsWithChildren, useCallback } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PosterCard, PosterSkeleton, RankedCard } from '@/components/poster-card';
-import { type AnimeSummary, type BrowseOptions, browseAnime, formatLabel } from '@/lib/anilist';
+import { type AnimeSummary, type BrowseOptions, browseAnime, mediaLabel } from '@/lib/anilist';
 import { useRequest } from '@/lib/use-request';
 import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
@@ -94,7 +94,7 @@ export function AnimeShelf({
               <PosterCard
                 anime={a}
                 width={w}
-                subtitle={[formatLabel(a.format), a.averageScore ? `${a.averageScore}%` : null]
+                subtitle={[mediaLabel(a), a.averageScore ? `${a.averageScore}%` : null]
                   .filter(Boolean)
                   .join(' · ')}
               />

@@ -75,8 +75,11 @@ export function EpisodeTiles({
   total,
   aired,
   color,
+  unit = 'Episode',
   onSet,
 }: {
+  /** "Episode" or "Chapter", for screen readers. */
+  unit?: string;
   progress: number;
   total: number | null;
   /** Episodes released so far; later tiles are locked. Null when unknown. */
@@ -121,7 +124,7 @@ export function EpisodeTiles({
             }}
             accessibilityRole="button"
             accessibilityState={{ disabled: locked }}
-            accessibilityLabel={`Episode ${n}${watched ? ', watched' : isNext ? ', up next' : locked ? ', not aired yet' : ''}`}
+            accessibilityLabel={`${unit} ${n}${watched ? ', watched' : isNext ? ', up next' : locked ? ', not released yet' : ''}`}
             style={({ pressed }) => [
               styles.tile,
               locked && styles.locked,

@@ -16,12 +16,12 @@ import type {
   ChipProps,
   EpisodeStepperProps,
   IncrementButtonProps,
-  ListSwitcherProps,
+  SegmentedProps,
   StatusPickerProps,
 } from './controls.types';
 import { Icon } from '@/components/icon';
 import { Fonts } from '@/theme/fonts';
-import { LIST_STATUSES, LISTS } from '@/constants/lists';
+import { LIST_STATUSES, listMeta } from '@/constants/lists';
 import { useAppTheme } from '@/theme/theme';
 
 export function IncrementButton({ onPress, accessibilityLabel }: IncrementButtonProps) {
@@ -38,12 +38,12 @@ export function IncrementButton({ onPress, accessibilityLabel }: IncrementButton
   );
 }
 
-export function StatusPicker({ value, onChange, blocked }: StatusPickerProps) {
+export function StatusPicker({ value, onChange, blocked, manga }: StatusPickerProps) {
   const { colors } = useAppTheme();
   return (
     <View style={styles.chips}>
       {LIST_STATUSES.map((status) => {
-        const meta = LISTS[status];
+        const meta = listMeta(status, manga);
         const selected = value === status;
         const reason = selected ? null : blocked?.[status];
         return (
@@ -135,17 +135,17 @@ export function ActionButton({
   );
 }
 
-/** Material 3 segmented buttons. */
-export function ListSwitcher({ value, onChange }: ListSwitcherProps) {
+/** Material 3 segmented buttons for any short set of options. */
+export function Segmented({ values, selectedIndex, onChange }: SegmentedProps) {
   return (
     <SegmentedButtons
-      value={value}
-      onValueChange={(v) => onChange(v as ListSwitcherProps['value'])}
+      value={String(selectedIndex)}
+      onValueChange={(v) => onChange(Number(v))}
       density="small"
       style={styles.switcher}
-      buttons={LIST_STATUSES.map((status) => ({
-        value: status,
-        label: LISTS[status].title,
+      buttons={values.map((label, i) => ({
+        value: String(i),
+        label,
         labelStyle: styles.segmentLabel,
         showSelectedCheck: false,
       }))}

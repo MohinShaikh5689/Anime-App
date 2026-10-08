@@ -5,13 +5,23 @@
 
 const ENDPOINT = 'https://graphql.anilist.co';
 
+export type MediaType = 'ANIME' | 'MANGA';
+
+/** What the user browses and tracks: anime, or comics split by country of origin. */
+export type MediaKind = 'anime' | 'manga' | 'manhwa';
+
 export type AnimeSummary = {
   id: number;
+  /** AniList media type; missing on entries saved before manga support (they're anime). */
+  type?: MediaType;
+  /** Country of origin (JP, KR, CN, TW), which tells manga from manhwa and manhua. */
+  country?: string | null;
   title: string;
   coverUrl: string | null;
   coverColor: string | null;
   /** Wide key art (AniList banner); not every title has one. */
   bannerUrl?: string | null;
+  /** Total episodes (anime) or chapters (manga), when known. */
   episodes: number | null;
   /** AniList release status: FINISHED, RELEASING, NOT_YET_RELEASED, CANCELLED, HIATUS. */
   airingStatus?: string | null;
@@ -32,6 +42,9 @@ export type AnimeDetails = AnimeSummary & {
   status: string | null;
   season: string | null;
   studios: string[];
+  /** Story and art credits (manga). */
+  authors: string[];
+  volumes: number | null;
   duration: number | null;
   characters: CharacterSummary[];
 };
@@ -63,7 +76,13 @@ type RawMedia = {
   title: { romaji: string | null; english: string | null; native?: string | null };
   coverImage: { large: string | null; extraLarge?: string | null; color: string | null } | null;
   bannerImage?: string | null;
+  type?: MediaType | null;
+  countryOfOrigin?: string | null;
   episodes: number | null;
+  chapters?: number | null;
+  volumes?: number | null;
+  startDate?: { year: number | null } | null;
+  staff?: { edges: { role: string; node: { name: { full: string | null } } }[] } | null;
   nextAiringEpisode?: { episode: number; airingAt: number } | null;
   format: string | null;
   seasonYear: number | null;
@@ -88,7 +107,11 @@ const SUMMARY_FIELDS = `
   title { romaji english }
   coverImage { extraLarge large color }
   bannerImage
+  type
+  countryOfOrigin
   episodes
+  chapters
+  startDate { year }
   status
   nextAiringEpisode { episode airingAt }
   format
@@ -120,16 +143,21 @@ function airing(m: RawMedia) {
   let aired: number | null = null;
   if (status === 'NOT_YET_RELEASED') aired = 0;
   else if (next) aired = Math.max(0, next.episode - 1);
-  else if (status === 'FINISHED' || status === 'CANCELLED') aired = m.episodes;
+  else if (status === 'FINISHED' || status === 'CANCELLED') aired = total(m);
   return { airingStatus: status, airedEpisodes: aired, nextAiringAt: next ? next.airingAt * 1000 : null };
 }
 
-/** Fresh episode counts and airing schedules for library shows, 50 per request. */
+/** Episodes for anime, chapters for manga. */
+function total(m: RawMedia) {
+  return m.type === 'MANGA' ? (m.chapters ?? null) : m.episodes;
+}
+
+/** Fresh episode/chapter counts and release schedules for library titles, 50 per request. */
 export async function getAiringInfo(ids: number[], signal?: AbortSignal) {
   const out: AnimeSummary[] = [];
   for (let i = 0; i < ids.length; i += 50) {
     const data = await request<{ Page: { media: RawMedia[] } }>(
-      `query ($ids: [Int]) { Page(perPage: 50) { media(id_in: $ids, type: ANIME) { ${SUMMARY_FIELDS} } } }`,
+      `query ($ids: [Int]) { Page(perPage: 50) { media(id_in: $ids) { ${SUMMARY_FIELDS} } } }`,
       { ids: ids.slice(i, i + 50) },
       signal
     );
@@ -141,19 +169,22 @@ export async function getAiringInfo(ids: number[], signal?: AbortSignal) {
 function toSummary(m: RawMedia): AnimeSummary {
   return {
     id: m.id,
+    type: m.type ?? 'ANIME',
+    country: m.countryOfOrigin ?? null,
     title: m.title.english || m.title.romaji || 'Untitled',
     coverUrl: m.coverImage?.extraLarge ?? m.coverImage?.large ?? null,
     coverColor: m.coverImage?.color ?? null,
     bannerUrl: m.bannerImage ?? null,
-    episodes: m.episodes,
+    episodes: total(m),
     ...airing(m),
     format: m.format,
-    year: m.seasonYear,
+    year: m.seasonYear ?? m.startDate?.year ?? null,
     averageScore: m.averageScore,
   };
 }
 
 export type BrowseOptions = {
+  kind?: MediaKind;
   search?: string;
   genre?: string;
   season?: Season;
@@ -164,17 +195,25 @@ export type BrowseOptions = {
 
 export type Season = 'WINTER' | 'SPRING' | 'SUMMER' | 'FALL';
 
+/** AniList filters for each kind. Manga covers Japanese comics; manhwa is Korean. */
+export const KIND_FILTER: Record<MediaKind, { type: MediaType; country: string | null }> = {
+  anime: { type: 'ANIME', country: null },
+  manga: { type: 'MANGA', country: 'JP' },
+  manhwa: { type: 'MANGA', country: 'KR' },
+};
+
 /** Search or browse AniList: free-text search, genre, season and sort combine freely. */
 export async function browseAnime(options: BrowseOptions, signal?: AbortSignal) {
-  const { search, genre, season, seasonYear, perPage = 30 } = options;
+  const { search, genre, season, seasonYear, perPage = 30, kind = 'anime' } = options;
   const sort = options.sort ?? (search ? 'SEARCH_MATCH' : 'POPULARITY_DESC');
+  const { type, country } = KIND_FILTER[kind];
   const data = await request<{ Page: { media: RawMedia[] } }>(
-    `query ($search: String, $genre: String, $season: MediaSeason, $seasonYear: Int, $sort: [MediaSort], $perPage: Int) {
+    `query ($search: String, $genre: String, $season: MediaSeason, $seasonYear: Int, $sort: [MediaSort], $perPage: Int, $type: MediaType, $country: CountryCode) {
       Page(perPage: $perPage) {
-        media(search: $search, genre: $genre, season: $season, seasonYear: $seasonYear, sort: $sort, type: ANIME, isAdult: false) { ${SUMMARY_FIELDS} }
+        media(search: $search, genre: $genre, season: $season, seasonYear: $seasonYear, sort: $sort, type: $type, countryOfOrigin: $country, isAdult: false) { ${SUMMARY_FIELDS} }
       }
     }`,
-    { search, genre, season, seasonYear, sort: [sort], perPage },
+    { search, genre, season, seasonYear, sort: [sort], perPage, type, country },
     signal
   );
   return data.Page.media.map(toSummary);
@@ -210,6 +249,8 @@ const FEED_ROWS = {
   sliceOfLife: 'perPage: 15) { media(type: ANIME, isAdult: false, genre: "Slice of Life", sort: [POPULARITY_DESC])',
   romance: 'perPage: 15) { media(type: ANIME, isAdult: false, genre: "Romance", sort: [POPULARITY_DESC])',
   topRated: 'perPage: 15) { media(type: ANIME, isAdult: false, sort: [SCORE_DESC])',
+  manga: 'perPage: 15) { media(type: MANGA, countryOfOrigin: JP, isAdult: false, sort: [TRENDING_DESC])',
+  manhwa: 'perPage: 15) { media(type: MANGA, countryOfOrigin: KR, isAdult: false, sort: [TRENDING_DESC])',
   allTime: 'perPage: 15) { media(type: ANIME, isAdult: false, sort: [POPULARITY_DESC])',
 } as const;
 
@@ -277,12 +318,18 @@ export const GENRES = [
 export async function getAnime(id: number, signal?: AbortSignal): Promise<AnimeDetails> {
   const data = await request<{ Media: RawMedia }>(
     `query ($id: Int) {
-      Media(id: $id, type: ANIME) {
+      Media(id: $id) {
         id
         title { romaji english native }
         coverImage { large extraLarge color }
         bannerImage
+        type
+        countryOfOrigin
         episodes
+        chapters
+        volumes
+        startDate { year }
+        staff(sort: [RELEVANCE, ID], perPage: 6) { edges { role node { name { full } } } }
         nextAiringEpisode { episode airingAt }
         format
         season
@@ -315,6 +362,15 @@ export async function getAnime(id: number, signal?: AbortSignal): Promise<AnimeD
     status: m.status ?? null,
     season: m.season ?? null,
     studios: m.studios?.nodes.map((s) => s.name) ?? [],
+    authors: [
+      ...new Set(
+        (m.staff?.edges ?? [])
+          .filter((e) => /story|art|original/i.test(e.role))
+          .map((e) => e.node.name.full)
+          .filter((n): n is string => !!n)
+      ),
+    ].slice(0, 2),
+    volumes: m.volumes ?? null,
     duration: m.duration ?? null,
     characters:
       m.characters?.edges.map((e) => ({
@@ -417,6 +473,9 @@ export function formatLabel(format: string | null) {
     OVA: 'OVA',
     ONA: 'ONA',
     MUSIC: 'Music',
+    MANGA: 'Manga',
+    NOVEL: 'Light Novel',
+    ONE_SHOT: 'One-shot',
   };
   return labels[format] ?? format;
 }
@@ -431,11 +490,37 @@ export function describeAnime(a: Pick<AnimeSummary, 'format' | 'year' | 'episode
     .join(' · ');
 }
 
+export function isManga(a: Pick<AnimeSummary, 'type'>) {
+  return a.type === 'MANGA';
+}
+
+/** The kind a title belongs to, for library tabs and labels. */
+export function kindOf(a: Pick<AnimeSummary, 'type' | 'country'>): MediaKind {
+  if (a.type !== 'MANGA') return 'anime';
+  return a.country === 'KR' ? 'manhwa' : 'manga';
+}
+
+/** "Manhwa", "Manhua", "Light Novel", "TV"… */
+export function mediaLabel(a: Pick<AnimeSummary, 'type' | 'country' | 'format'>) {
+  if (a.type !== 'MANGA') return formatLabel(a.format);
+  if (a.format === 'NOVEL' || a.format === 'ONE_SHOT') return formatLabel(a.format);
+  return a.country === 'KR' ? 'Manhwa' : a.country === 'CN' || a.country === 'TW' ? 'Manhua' : 'Manga';
+}
+
+/** Words for progress: episodes for anime, chapters for manga. */
+export function unitsOf(a: Pick<AnimeSummary, 'type'>) {
+  return isManga(a)
+    ? { one: 'Chapter', many: 'chapters', short: 'Ch', verb: 'Reading', done: 'Read', start: 'Start Reading' }
+    : { one: 'Episode', many: 'episodes', short: 'Ep', verb: 'Watching', done: 'Watched', start: 'Start Watching' };
+}
+
 /** Strips detail-only fields so only the summary is persisted in the library. */
 export function pickSummary(a: AnimeSummary): AnimeSummary {
   const { id, title, coverUrl, coverColor, bannerUrl, episodes, format, year, averageScore } = a;
   return {
     id,
+    type: a.type ?? 'ANIME',
+    country: a.country ?? null,
     title,
     coverUrl,
     coverColor,

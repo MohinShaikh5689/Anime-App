@@ -12,7 +12,7 @@ export function SearchScreen() {
   return (
     <>
       <Stack.SearchBar
-        placeholder="Anime titles"
+        placeholder="Anime, manga, manhwa"
         hideWhenScrolling={false}
         autoCapitalize="none"
         onChangeText={(e) => setQuery(e.nativeEvent.text)}

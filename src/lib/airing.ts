@@ -7,7 +7,8 @@
 import type { ListStatus } from '@/constants/lists';
 import type { AnimeSummary } from '@/lib/anilist';
 
-type Airing = Pick<AnimeSummary, 'episodes' | 'airingStatus' | 'airedEpisodes' | 'nextAiringAt'>;
+type Airing = Pick<AnimeSummary, 'episodes' | 'airingStatus' | 'airedEpisodes' | 'nextAiringAt'> &
+  Partial<Pick<AnimeSummary, 'type'>>;
 
 /** Episodes released so far, or null when unknown. */
 export function airedCount(a: Airing): number | null {
@@ -47,14 +48,17 @@ export function isCaughtUp(a: Airing, progress: number) {
 
 /** Whether the show can move to `status`, and why not. */
 export function statusBlock(a: Airing, status: ListStatus): string | null {
+  const manga = a.type === 'MANGA';
   if (status === 'watching' && isUnaired(a)) {
+    if (manga) return "It hasn't been published yet. Save it to your Wishlist until then.";
     return a.nextAiringAt
       ? `It premieres ${formatAiring(a.nextAiringAt)}. Save it to your Wishlist until then.`
       : "It hasn't aired yet. Save it to your Wishlist until then.";
   }
   if (status === 'watched' && isStillAiring(a)) {
-    return isUnaired(a)
-      ? "It hasn't aired yet."
+    if (isUnaired(a)) return manga ? "It hasn't been published yet." : "It hasn't aired yet.";
+    return manga
+      ? 'New chapters are still coming out. It moves to Read on its own once the series ends and you log the final chapter.'
       : 'It is still airing. It moves to Watched on its own once you log the final episode.';
   }
   return null;
@@ -77,11 +81,12 @@ export function formatAiring(at: number, now = Date.now()) {
 /** Short label for a show that's caught up: "Ep 8 tomorrow". */
 export function nextEpisodeLabel(a: Airing) {
   const aired = airedCount(a);
-  if (!a.nextAiringAt || aired == null) return 'Caught up';
+  if (!a.nextAiringAt || aired == null) return a.type === 'MANGA' ? 'Up to date' : 'Caught up';
   return `Ep ${aired + 1} ${formatAiring(a.nextAiringAt)}`;
 }
 
 /** "Premieres tomorrow", or "Not yet aired" when there's no date. */
 export function premiereLabel(a: Airing) {
+  if (a.type === 'MANGA') return 'Not yet published';
   return a.nextAiringAt ? `Premieres ${formatAiring(a.nextAiringAt)}` : 'Not yet aired';
 }

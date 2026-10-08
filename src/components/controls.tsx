@@ -16,11 +16,11 @@ import type {
   ChipProps,
   EpisodeStepperProps,
   IncrementButtonProps,
-  ListSwitcherProps,
+  SegmentedProps,
   StatusPickerProps,
 } from './controls.types';
 import { Icon } from '@/components/icon';
-import { LIST_STATUSES, LISTS } from '@/constants/lists';
+import { LIST_STATUSES, listMeta } from '@/constants/lists';
 import { readableOn } from '@/lib/color';
 import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
@@ -66,14 +66,14 @@ export function IncrementButton({ onPress, accessibilityLabel, floating }: Incre
   );
 }
 
-export function StatusPicker({ value, onChange, color, blocked }: StatusPickerProps) {
+export function StatusPicker({ value, onChange, color, blocked, manga }: StatusPickerProps) {
   const { colors } = useAppTheme();
   const accent = color ?? (colors.primary as string);
   const onAccent = color ? readableOn(color) : colors.onPrimary;
   return (
     <View style={styles.statusGrid} accessibilityRole="radiogroup">
       {LIST_STATUSES.map((status) => {
-        const meta = LISTS[status];
+        const meta = listMeta(status, manga);
         const selected = value === status;
         const reason = selected ? null : blocked?.[status];
         const fg = selected ? onAccent : colors.text;
@@ -175,16 +175,13 @@ export function ActionButton({ title, sf, md, variant = 'tonal', loading, disabl
   );
 }
 
-/** Native UISegmentedControl (SwiftUI segmented Picker via @expo/ui). */
-export function ListSwitcher({ value, onChange }: ListSwitcherProps) {
+/** Native segmented control for any short set of options. */
+export function Segmented({ values, selectedIndex, onChange }: SegmentedProps) {
   return (
     <SegmentedControl
-      values={LIST_STATUSES.map((s) => LISTS[s].title)}
-      selectedIndex={LIST_STATUSES.indexOf(value)}
-      onChange={(e) => {
-        const next = LIST_STATUSES[e.nativeEvent.selectedSegmentIndex];
-        if (next) onChange(next);
-      }}
+      values={values}
+      selectedIndex={selectedIndex}
+      onChange={(e) => onChange(e.nativeEvent.selectedSegmentIndex)}
       style={styles.switcher}
     />
   );

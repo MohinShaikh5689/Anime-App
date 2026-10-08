@@ -7,8 +7,8 @@ import { PlatformPressable } from '@/components/motion';
 import { Poster } from '@/components/poster';
 import { EpisodeBar } from '@/components/progress';
 import { useAnimeHref } from '@/components/tab-context';
-import { LISTS } from '@/constants/lists';
-import type { AnimeSummary } from '@/lib/anilist';
+import { listMeta } from '@/constants/lists';
+import { type AnimeSummary, isManga } from '@/lib/anilist';
 import { showAccent } from '@/lib/color';
 import { useEntry } from '@/store/library';
 import { Fonts } from '@/theme/fonts';
@@ -26,28 +26,30 @@ type Props = {
   /** Rendered over the bottom-right corner of the cover (e.g. a +1 button). */
   accessory?: React.ReactNode;
   onLongPress?: () => void;
+  /** Badge the cover with its library list (off where the list is already obvious). */
+  showMark?: boolean;
 };
 
 /** Cover-first card for grids and shelves. */
-export const PosterCard = memo(function PosterCard({ anime, width, subtitle, frames, accessory, onLongPress }: Props) {
+export const PosterCard = memo(function PosterCard({ anime, width, subtitle, frames, accessory, onLongPress, showMark = true }: Props) {
   const { colors } = useAppTheme();
   const href = useAnimeHref();
   const entry = useEntry(anime.id);
-  const accent = showAccent(anime.coverColor, colors.primary as string);
+  const accent = showAccent(anime.coverColor, colors.primary);
 
   return (
     <View style={{ width }}>
       <Link href={href(anime.id)} asChild>
         <PlatformPressable
           accessibilityRole="button"
-          accessibilityLabel={`${anime.title}${entry ? `, in ${LISTS[entry.status].title}` : ''}`}
+          accessibilityLabel={`${anime.title}${entry ? `, in ${listMeta(entry.status, isManga(anime)).title}` : ''}`}
           onLongPress={onLongPress}
           delayLongPress={350}
           style={[styles.coverWrap, { boxShadow: `0 10px 24px ${accent}38` }]}>
           <Poster uri={anime.coverUrl} color={anime.coverColor} width={width} />
-          {entry && !frames ? (
+          {entry && showMark && !frames ? (
             <View style={styles.mark}>
-              <Icon sf={LISTS[entry.status].sfSelected} md={LISTS[entry.status].md} size={13} color="#FFFFFF" />
+              <Icon sf={listMeta(entry.status, isManga(anime)).sfSelected} md={listMeta(entry.status, isManga(anime)).md} size={13} color="#FFFFFF" />
             </View>
           ) : null}
         </PlatformPressable>

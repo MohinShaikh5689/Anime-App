@@ -16,7 +16,7 @@ export function SearchScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.bar, { paddingTop: insets.top + 8 }]}>
         <Searchbar
-          placeholder="Search anime"
+          placeholder="Anime, manga, manhwa"
           value={query}
           onChangeText={setQuery}
           autoCapitalize="none"

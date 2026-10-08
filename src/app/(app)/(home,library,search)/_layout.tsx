@@ -22,8 +22,8 @@ export default function TabStackLayout({ segment }: { segment: string }) {
           options={{
             ...rootScreenOptions,
             title: TITLES[tab],
-            // Home is a full-bleed hero with its own Account button.
-            headerShown: tab !== 'home',
+            // Home and Library draw their own headers; Search keeps the native search bar.
+            headerShown: tab === 'search',
           }}
         />
         <Stack.Screen

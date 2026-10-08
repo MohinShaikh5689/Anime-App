@@ -20,6 +20,8 @@ export type StatusPickerProps = {
   color?: string;
   /** Lists the show can't move to yet, with the reason shown on tap. */
   blocked?: Partial<Record<ListStatus, string | null>>;
+  /** Use reading words (Reading, Read) for manga. */
+  manga?: boolean;
 };
 
 export type EpisodeStepperProps = {
@@ -42,7 +44,8 @@ export type ActionButtonProps = {
 
 export type ChipProps = { label: string; selected: boolean; onPress: () => void };
 
-export type ListSwitcherProps = {
-  value: ListStatus;
-  onChange: (status: ListStatus) => void;
+export type SegmentedProps = {
+  values: string[];
+  selectedIndex: number;
+  onChange: (index: number) => void;
 };

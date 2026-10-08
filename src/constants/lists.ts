@@ -57,3 +57,22 @@ export const LISTS: Record<ListStatus, ListMeta> = {
     emptyBody: 'Shows you gave up on are kept here, out of the way.',
   },
 };
+
+/** List names for comics: Reading and Read instead of Watching and Watched. */
+const READING: Partial<Record<ListStatus, Partial<ListMeta>>> = {
+  watching: {
+    title: 'Reading',
+    action: 'Reading',
+    sf: 'book',
+    sfSelected: 'book.fill',
+    md: 'menu_book',
+    emptyBody: 'Start a series from your wishlist or find something new in Search.',
+  },
+  watched: { title: 'Read', action: 'Read', emptyTitle: 'Nothing finished yet', emptyBody: 'Series you finish land here, ready for you to rate.' },
+  wishlist: { emptyBody: 'Save series you plan to read and they will show up here.' },
+  dropped: { emptyBody: 'Series you gave up on are kept here, out of the way.' },
+};
+
+export function listMeta(status: ListStatus, manga = false): ListMeta {
+  return manga ? { ...LISTS[status], ...READING[status] } : LISTS[status];
+}

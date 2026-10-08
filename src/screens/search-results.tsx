@@ -1,15 +1,19 @@
 import { useCallback, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { ActionButton } from '@/components/controls';
+import { ActionButton, Segmented } from '@/components/controls';
 import { GenreTiles } from '@/components/genre-tiles';
 import { PosterCard, PosterSkeleton } from '@/components/poster-card';
 import { SectionHeader } from '@/components/shelf';
 import { EmptyState, ErrorState } from '@/components/states';
-import { type AnimeSummary, type BrowseOptions, browseAnime, formatLabel } from '@/lib/anilist';
+import { type AnimeSummary, type BrowseOptions, browseAnime, type MediaKind, mediaLabel } from '@/lib/anilist';
 import { GRID_GAP, GRID_PADDING, useGrid } from '@/lib/use-grid';
 import { useDebouncedValue, useRequest } from '@/lib/use-request';
+import { useUi } from '@/store/ui';
 import { useAppTheme } from '@/theme/theme';
+
+const KINDS: MediaKind[] = ['anime', 'manga', 'manhwa'];
+const KIND_LABELS = ['Anime', 'Manga', 'Manhwa'];
 
 const PADDING = GRID_PADDING;
 const GAP = GRID_GAP;
@@ -22,13 +26,15 @@ export function SearchResults({ query }: { query: string }) {
   const { colors } = useAppTheme();
   const { columns, cardWidth } = useGrid();
   const [genre, setGenre] = useState<string | null>(null);
+  const kind = useUi((s) => s.searchKind);
+  const setKind = useUi((s) => s.setSearchKind);
   const q = useDebouncedValue(query.trim(), 350);
 
   const options: BrowseOptions = q
-    ? { search: q }
+    ? { kind, search: q }
     : genre
-      ? { genre, sort: 'POPULARITY_DESC' }
-      : { sort: 'TRENDING_DESC' };
+      ? { kind, genre, sort: 'POPULARITY_DESC' }
+      : { kind, sort: 'TRENDING_DESC' };
   const key = `grid:${JSON.stringify(options)}`;
   const fetcher = useCallback(
     (signal: AbortSignal) => browseAnime({ ...options, perPage: 30 }, signal),
@@ -37,10 +43,11 @@ export function SearchResults({ query }: { query: string }) {
   );
   const { data, error, loading, retry } = useRequest(key, fetcher);
 
-  const heading = q ? 'Results' : genre ? `Popular in ${genre}` : 'Trending now';
+  const heading = q ? 'Results' : genre ? `Popular in ${genre}` : `Trending ${KIND_LABELS[KINDS.indexOf(kind)].toLowerCase()}`;
 
   const header = (
     <View style={styles.header}>
+      <Segmented values={KIND_LABELS} selectedIndex={KINDS.indexOf(kind)} onChange={(i) => setKind(KINDS[i] ?? 'anime')} />
       {!q && !genre ? (
         <>
           <SectionHeader title="Browse by genre" />
@@ -94,7 +101,7 @@ export function SearchResults({ query }: { query: string }) {
         <PosterCard
           anime={item}
           width={cardWidth}
-          subtitle={[formatLabel(item.format), item.year].filter(Boolean).join(' · ')}
+          subtitle={[mediaLabel(item), item.year].filter(Boolean).join(' · ')}
         />
       )}
       ListHeaderComponent={header}

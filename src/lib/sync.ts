@@ -61,12 +61,17 @@ async function syncOnce() {
     .map((id) => library.entries[Number(id)])
     .filter((e) => e !== undefined);
   if (pushed.length > 0) {
-    const { error } = await supabase
-      .from('library_entries')
-      .upsert(
-        pushed.map((e) => toRemote(e, userId)),
-        { onConflict: 'user_id,anime_id' }
-      );
+    const rows = pushed.map((e) => toRemote(e, userId));
+    let { error } = await supabase.from('library_entries').upsert(rows, { onConflict: 'user_id,anime_id' });
+    if (error?.code === 'PGRST204') {
+      // The database predates migration 0003 (no media_type/country columns yet).
+      ({ error } = await supabase
+        .from('library_entries')
+        .upsert(
+          rows.map(({ media_type: _type, country: _country, ...row }) => row),
+          { onConflict: 'user_id,anime_id' }
+        ));
+    }
     if (error) throw error;
   }
 

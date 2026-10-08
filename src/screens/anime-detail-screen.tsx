@@ -13,7 +13,15 @@ import { RatingStars } from '@/components/rating-stars';
 import { AnimeShelf } from '@/components/shelf';
 import { ErrorState, LoadingState } from '@/components/states';
 import { airedCount, isUnaired, maxProgress, nextEpisodeLabel, premiereLabel, statusBlock } from '@/lib/airing';
-import { type AnimeSummary, formatLabel, getAnime, getRecommendations, pickSummary } from '@/lib/anilist';
+import {
+  type AnimeSummary,
+  getAnime,
+  getRecommendations,
+  isManga,
+  mediaLabel,
+  pickSummary,
+  unitsOf,
+} from '@/lib/anilist';
 import { readableOn, showAccent, withAlpha } from '@/lib/color';
 import { useRequest } from '@/lib/use-request';
 import { useEntry, useLibrary } from '@/store/library';
@@ -27,6 +35,13 @@ const STATUS_LABELS: Record<string, string> = {
   NOT_YET_RELEASED: 'Not yet aired',
   CANCELLED: 'Cancelled',
   HIATUS: 'On hiatus',
+};
+
+const PUBLISHING_LABELS: Record<string, string> = {
+  ...STATUS_LABELS,
+  FINISHED: 'Completed',
+  RELEASING: 'Publishing',
+  NOT_YET_RELEASED: 'Not yet published',
 };
 
 function titleSize(title: string) {
@@ -66,7 +81,9 @@ export function AnimeDetailScreen({ id }: { id: number }) {
     );
   }
 
-  const accent = showAccent(anime.coverColor, colors.primary as string);
+  const accent = showAccent(anime.coverColor, colors.primary);
+  const units = unitsOf(anime);
+  const manga = isManga(anime);
   const onAccent = readableOn(accent);
   const artHeight = Math.round(Math.min(width * 1.3, 620));
   const size = titleSize(anime.title);
@@ -100,33 +117,37 @@ export function AnimeDetailScreen({ id }: { id: number }) {
       }
     : entry.status === 'wishlist' && !unaired
       ? {
-          label: 'Start Watching',
+          label: units.start,
           sf: 'play.fill' as const,
           md: 'play_arrow' as const,
           run: () => setStatus(pickSummary(anime), 'watching'),
         }
       : entry.status === 'watching' && entry.progress < maxProgress(live)
         ? {
-            label: `Log Episode ${entry.progress + 1}`,
+            label: `Log ${units.one} ${entry.progress + 1}`,
             sf: 'checkmark' as const,
             md: 'check' as const,
             run: () => incrementProgress(id),
           }
         : null;
 
-  const meta = [formatLabel(anime.format), anime.year, anime.episodes ? `${anime.episodes} episodes` : null].filter(
+  const meta = [mediaLabel(anime), anime.year, anime.episodes ? `${anime.episodes} ${units.many}` : null].filter(
     Boolean
   );
 
   const info = [
-    details?.status ? { label: 'Status', value: STATUS_LABELS[details.status] ?? details.status } : null,
+    details?.status ? { label: 'Status', value: (manga ? PUBLISHING_LABELS : STATUS_LABELS)[details.status] ?? details.status } : null,
     details?.season && anime.year
       ? { label: 'Season', value: `${details.season[0]}${details.season.slice(1).toLowerCase()} ${anime.year}` }
       : null,
-    anime.episodes ? { label: 'Episodes', value: String(anime.episodes) } : null,
-    details?.duration ? { label: 'Episode length', value: `${details.duration} min` } : null,
-    details?.studios.length ? { label: 'Studio', value: details.studios.join(', ') } : null,
-    anime.format ? { label: 'Format', value: formatLabel(anime.format) ?? anime.format } : null,
+    anime.episodes ? { label: manga ? 'Chapters' : 'Episodes', value: String(anime.episodes) } : null,
+    details?.volumes ? { label: 'Volumes', value: String(details.volumes) } : null,
+    !manga && details?.duration ? { label: 'Episode length', value: `${details.duration} min` } : null,
+    !manga && details?.studios.length ? { label: 'Studio', value: details.studios.join(', ') } : null,
+    manga && details?.authors.length
+      ? { label: details.authors.length > 1 ? 'Authors' : 'Author', value: details.authors.join(', ') }
+      : null,
+    anime.format ? { label: 'Format', value: mediaLabel(anime) ?? anime.format } : null,
   ].filter((r): r is { label: string; value: string } => r != null);
 
   return (
@@ -216,18 +237,18 @@ export function AnimeDetailScreen({ id }: { id: number }) {
         <View style={[styles.primary, { backgroundColor: withAlpha(accent, 0.16) }]}>
           <Icon sf="calendar" md="event" size={20} color={accent} />
           <Text style={[styles.primaryLabel, { color: colors.text }]}>
-            {unaired ? premiereLabel(live) : live.nextAiringAt ? `Caught up · ${nextEpisodeLabel(live)}` : "You're caught up"}
+            {unaired ? premiereLabel(live) : live.nextAiringAt ? `Caught up · ${nextEpisodeLabel(live)}` : manga ? "You're up to date" : "You're caught up"}
           </Text>
         </View>
       ) : null}
 
       {entry && !unaired ? (
         <Section
-          title="Episodes"
+          title={manga ? 'Chapters' : 'Episodes'}
           accessory={
             <Text style={[Type.subhead, { color: colors.textSecondary }]}>
               {entry.progress}
-              {entry.episodes ? ` of ${entry.episodes} watched` : ' watched'}
+              {entry.episodes ? ` of ${entry.episodes}` : ''} {units.done.toLowerCase()}
             </Text>
           }>
           <EpisodeTiles
@@ -235,6 +256,7 @@ export function AnimeDetailScreen({ id }: { id: number }) {
             total={entry.episodes}
             aired={airedCount(live)}
             color={accent}
+            unit={units.one}
             onSet={(n) => setProgress(id, n)}
           />
         </Section>
@@ -247,6 +269,7 @@ export function AnimeDetailScreen({ id }: { id: number }) {
             onChange={(s) => setStatus(pickSummary(live), s)}
             color={accent}
             blocked={blocked}
+            manga={manga}
           />
         </View>
       </Section>
@@ -271,7 +294,7 @@ export function AnimeDetailScreen({ id }: { id: number }) {
       ) : null}
 
       {details?.characters.length ? (
-        <Section title="Cast">
+        <Section title={manga ? 'Characters' : 'Cast'}>
           <CharacterRow characters={details.characters} />
         </Section>
       ) : null}

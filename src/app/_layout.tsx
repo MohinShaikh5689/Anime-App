@@ -54,6 +54,16 @@ function RootStack() {
             headerRight: Platform.OS === 'ios' ? () => <DoneButton /> : undefined,
           }}
         />
+        <Stack.Screen
+          name="character/[id]"
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: [0.7, 1],
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 28,
+            sheetExpandsWhenScrolledToEdge: true,
+          }}
+        />
       </Stack.Protected>
       <Stack.Protected guard={!signedIn}>
         <Stack.Screen name="sign-in" />

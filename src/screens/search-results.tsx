@@ -1,26 +1,18 @@
 import { useCallback, useState } from 'react';
-import { FlatList, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Chip } from '@/components/controls';
 import { PosterCard, PosterSkeleton } from '@/components/poster-card';
 import { EmptyState, ErrorState } from '@/components/states';
 import { type AnimeSummary, type BrowseOptions, GENRES, browseAnime, formatLabel } from '@/lib/anilist';
+import { GRID_GAP, GRID_PADDING, useGrid } from '@/lib/use-grid';
 import { useDebouncedValue, useRequest } from '@/lib/use-request';
 import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
 
-const PADDING = 16;
-const GAP = 12;
-const MIN_CARD = 104;
-
-function useGrid() {
-  const { width } = useWindowDimensions();
-  const inner = width - PADDING * 2;
-  const columns = Math.max(3, Math.floor((inner + GAP) / (MIN_CARD + 40 + GAP)));
-  const cardWidth = Math.floor((inner - GAP * (columns - 1)) / columns);
-  return { columns, cardWidth };
-}
+const PADDING = GRID_PADDING;
+const GAP = GRID_GAP;
 
 /**
  * Poster grid. With no query it browses trending anime (or a picked genre);

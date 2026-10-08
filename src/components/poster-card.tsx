@@ -29,6 +29,7 @@ type Props = {
   progress?: number | null;
   /** Rendered over the bottom-right corner of the cover (e.g. a +1 button). */
   accessory?: React.ReactNode;
+  onLongPress?: () => void;
 };
 
 /** Cover-first card used in grids and horizontal shelves. */
@@ -38,6 +39,7 @@ export const PosterCard = memo(function PosterCard({
   subtitle,
   progress,
   accessory,
+  onLongPress,
 }: Props) {
   const { colors } = useAppTheme();
   const href = useAnimeHref();
@@ -51,6 +53,8 @@ export const PosterCard = memo(function PosterCard({
           accessibilityRole="button"
           accessibilityLabel={anime.title}
           scaleTo={0.95}
+          onLongPress={onLongPress}
+          delayLongPress={350}
           style={styles.coverWrap}>
           <Poster uri={anime.coverUrl} color={anime.coverColor} width={width} style={styles.cover} />
 

@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ActionButton, EpisodeStepper, StatusPicker } from '@/components/controls';
+import { CharacterRow } from '@/components/character-row';
 import { AmbientBackdrop } from '@/components/motion';
 import { Poster } from '@/components/poster';
 import { RatingStars } from '@/components/rating-stars';
@@ -127,7 +128,16 @@ export function AnimeDetailScreen({ id }: { id: number }) {
           </>
         ) : null}
 
-        {details?.genres.length ? (
+        {details?.characters.length ? (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Characters</Text>
+          <View style={styles.bleed}>
+            <CharacterRow characters={details.characters} />
+          </View>
+        </View>
+      ) : null}
+
+      {details?.genres.length ? (
           <View style={styles.genres}>
             {details.genres.map((g) => (
               <View key={g} style={[styles.genre, { backgroundColor: colors.fill }]}>
@@ -197,6 +207,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
   },
   center: { alignItems: 'center' },
+  bleed: { marginHorizontal: -16 },
   genres: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   genre: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14 },
   genreText: { fontFamily: Fonts.heading, fontSize: 13 },

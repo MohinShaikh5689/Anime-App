@@ -7,7 +7,8 @@ Keep anime in four lists, **Watching**, **Wishlist**, **Watched** and **Dropped*
 ## Features
 
 - **Home**: Continue Watching (with one-tap +1 episode), Up Next from your wishlist, counts for each list, and Trending, This Season and Top Rated rows from AniList.
-- **Library**: all four lists in one tab, switched with a native segmented control (UISegmentedControl on iOS, Material 3 segmented buttons on Android).
+- **Library**: all four lists in one tab as a poster grid, switched with a native segmented control (UISegmentedControl on iOS, Material 3 segmented buttons on Android). Long-press a cover to move it to another list or remove it.
+- **Characters**: each anime page shows its cast. Tap a character to open a sheet with their portrait, details and bio (spoiler blocks are hidden).
 - **Search** the [AniList](https://anilist.co) catalogue (public GraphQL API, no key needed) in a poster grid. Before you type, browse trending anime or filter by genre.
 - **Add** any title to a list, **move** it between lists, or **remove** it.
 - **Episode tracking**: tap **+** on a row in the Watching list, or use the stepper on the detail screen. Starting an episode moves a show from Wishlist to Watching. Marking a show Watched fills in all its episodes.

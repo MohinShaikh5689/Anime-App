@@ -25,6 +25,29 @@ export type AnimeDetails = AnimeSummary & {
   season: string | null;
   studios: string[];
   duration: number | null;
+  characters: CharacterSummary[];
+};
+
+export type CharacterSummary = {
+  id: number;
+  name: string;
+  image: string | null;
+  role: 'MAIN' | 'SUPPORTING' | 'BACKGROUND';
+  voiceActor: { name: string; image: string | null } | null;
+};
+
+export type CharacterDetails = {
+  id: number;
+  name: string;
+  nativeName: string | null;
+  alternativeNames: string[];
+  image: string | null;
+  description: string | null;
+  gender: string | null;
+  age: string | null;
+  birthday: string | null;
+  bloodType: string | null;
+  favourites: number | null;
 };
 
 type RawMedia = {
@@ -42,6 +65,13 @@ type RawMedia = {
   status?: string | null;
   duration?: number | null;
   studios?: { nodes: { name: string }[] } | null;
+  characters?: {
+    edges: {
+      role: CharacterSummary['role'];
+      node: { id: number; name: { full: string | null }; image: { large: string | null } | null };
+      voiceActors: { name: { full: string | null }; image: { medium: string | null } | null }[];
+    }[];
+  } | null;
 };
 
 const SUMMARY_FIELDS = `
@@ -154,6 +184,13 @@ export async function getAnime(id: number, signal?: AbortSignal): Promise<AnimeD
         status
         duration
         studios(isMain: true) { nodes { name } }
+        characters(sort: [ROLE, RELEVANCE, ID], perPage: 16) {
+          edges {
+            role
+            node { id name { full } image { large } }
+            voiceActors(language: JAPANESE, sort: [RELEVANCE, ID]) { name { full } image { medium } }
+          }
+        }
       }
     }`,
     { id },
@@ -170,7 +207,83 @@ export async function getAnime(id: number, signal?: AbortSignal): Promise<AnimeD
     season: m.season ?? null,
     studios: m.studios?.nodes.map((s) => s.name) ?? [],
     duration: m.duration ?? null,
+    characters:
+      m.characters?.edges.map((e) => ({
+        id: e.node.id,
+        name: e.node.name.full ?? 'Unknown',
+        image: e.node.image?.large ?? null,
+        role: e.role,
+        voiceActor: e.voiceActors[0]
+          ? { name: e.voiceActors[0].name.full ?? '', image: e.voiceActors[0].image?.medium ?? null }
+          : null,
+      })) ?? [],
   };
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+export async function getCharacter(id: number, signal?: AbortSignal): Promise<CharacterDetails> {
+  const data = await request<{
+    Character: {
+      id: number;
+      name: { full: string | null; native: string | null; alternative: string[] | null };
+      image: { large: string | null } | null;
+      description: string | null;
+      gender: string | null;
+      age: string | null;
+      dateOfBirth: { year: number | null; month: number | null; day: number | null } | null;
+      bloodType: string | null;
+      favourites: number | null;
+    };
+  }>(
+    `query ($id: Int) {
+      Character(id: $id) {
+        id
+        name { full native alternative }
+        image { large }
+        description(asHtml: false)
+        gender
+        age
+        dateOfBirth { year month day }
+        bloodType
+        favourites
+      }
+    }`,
+    { id },
+    signal
+  );
+  const c = data.Character;
+  const dob = c.dateOfBirth;
+  const birthday =
+    dob?.month && dob.day
+      ? `${MONTHS[dob.month - 1]} ${dob.day}${dob.year ? `, ${dob.year}` : ''}`
+      : null;
+  return {
+    id: c.id,
+    name: c.name.full ?? 'Unknown',
+    nativeName: c.name.native,
+    alternativeNames: (c.name.alternative ?? []).filter(Boolean),
+    image: c.image?.large ?? null,
+    description: c.description ? cleanCharacterDescription(c.description) : null,
+    gender: c.gender,
+    age: c.age,
+    birthday,
+    bloodType: c.bloodType,
+    favourites: c.favourites,
+  };
+}
+
+/** AniList character bios use Markdown, links and ~!spoiler!~ blocks. */
+function cleanCharacterDescription(text: string) {
+  return cleanDescription(
+    text
+      .replace(/~!([\s\S]*?)!~/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/__([^_]+)__/g, '$1')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/(^|\s)_([^_]+)_(?=\s|[.,!?]|$)/g, '$1$2')
+      .replace(/^\s*[-*]\s+/gm, '• ')
+  );
 }
 
 /** AniList descriptions contain light HTML even with asHtml: false. */

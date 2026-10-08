@@ -13,6 +13,12 @@ export type AnimeSummary = {
   /** Wide key art (AniList banner); not every title has one. */
   bannerUrl?: string | null;
   episodes: number | null;
+  /** AniList release status: FINISHED, RELEASING, NOT_YET_RELEASED, CANCELLED, HIATUS. */
+  airingStatus?: string | null;
+  /** Episodes released so far, when known (0 for unreleased shows). */
+  airedEpisodes?: number | null;
+  /** When the next episode airs (ms since epoch), for airing shows. */
+  nextAiringAt?: number | null;
   format: string | null;
   year: number | null;
   averageScore: number | null;
@@ -58,6 +64,7 @@ type RawMedia = {
   coverImage: { large: string | null; extraLarge?: string | null; color: string | null } | null;
   bannerImage?: string | null;
   episodes: number | null;
+  nextAiringEpisode?: { episode: number; airingAt: number } | null;
   format: string | null;
   seasonYear: number | null;
   season?: string | null;
@@ -82,6 +89,8 @@ const SUMMARY_FIELDS = `
   coverImage { extraLarge large color }
   bannerImage
   episodes
+  status
+  nextAiringEpisode { episode airingAt }
   format
   seasonYear
   averageScore
@@ -104,6 +113,31 @@ async function request<T>(query: string, variables: Record<string, unknown>, sig
   return json.data;
 }
 
+/** What has aired so far, derived from AniList's status and next-episode schedule. */
+function airing(m: RawMedia) {
+  const status = m.status ?? null;
+  const next = m.nextAiringEpisode ?? null;
+  let aired: number | null = null;
+  if (status === 'NOT_YET_RELEASED') aired = 0;
+  else if (next) aired = Math.max(0, next.episode - 1);
+  else if (status === 'FINISHED' || status === 'CANCELLED') aired = m.episodes;
+  return { airingStatus: status, airedEpisodes: aired, nextAiringAt: next ? next.airingAt * 1000 : null };
+}
+
+/** Fresh episode counts and airing schedules for library shows, 50 per request. */
+export async function getAiringInfo(ids: number[], signal?: AbortSignal) {
+  const out: AnimeSummary[] = [];
+  for (let i = 0; i < ids.length; i += 50) {
+    const data = await request<{ Page: { media: RawMedia[] } }>(
+      `query ($ids: [Int]) { Page(perPage: 50) { media(id_in: $ids, type: ANIME) { ${SUMMARY_FIELDS} } } }`,
+      { ids: ids.slice(i, i + 50) },
+      signal
+    );
+    out.push(...data.Page.media.map(toSummary));
+  }
+  return out;
+}
+
 function toSummary(m: RawMedia): AnimeSummary {
   return {
     id: m.id,
@@ -112,6 +146,7 @@ function toSummary(m: RawMedia): AnimeSummary {
     coverColor: m.coverImage?.color ?? null,
     bannerUrl: m.bannerImage ?? null,
     episodes: m.episodes,
+    ...airing(m),
     format: m.format,
     year: m.seasonYear,
     averageScore: m.averageScore,
@@ -248,6 +283,7 @@ export async function getAnime(id: number, signal?: AbortSignal): Promise<AnimeD
         coverImage { large extraLarge color }
         bannerImage
         episodes
+        nextAiringEpisode { episode airingAt }
         format
         season
         seasonYear
@@ -398,5 +434,18 @@ export function describeAnime(a: Pick<AnimeSummary, 'format' | 'year' | 'episode
 /** Strips detail-only fields so only the summary is persisted in the library. */
 export function pickSummary(a: AnimeSummary): AnimeSummary {
   const { id, title, coverUrl, coverColor, bannerUrl, episodes, format, year, averageScore } = a;
-  return { id, title, coverUrl, coverColor, bannerUrl: bannerUrl ?? null, episodes, format, year, averageScore };
+  return {
+    id,
+    title,
+    coverUrl,
+    coverColor,
+    bannerUrl: bannerUrl ?? null,
+    episodes,
+    airingStatus: a.airingStatus ?? null,
+    airedEpisodes: a.airedEpisodes ?? null,
+    nextAiringAt: a.nextAiringAt ?? null,
+    format,
+    year,
+    averageScore,
+  };
 }

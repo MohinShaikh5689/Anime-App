@@ -9,7 +9,7 @@ import { BlurView } from 'expo-blur';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import * as Haptics from 'expo-haptics';
 import type { PropsWithChildren } from 'react';
-import { ActivityIndicator, Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
 import type {
   ActionButtonProps,
@@ -66,7 +66,7 @@ export function IncrementButton({ onPress, accessibilityLabel, floating }: Incre
   );
 }
 
-export function StatusPicker({ value, onChange, color }: StatusPickerProps) {
+export function StatusPicker({ value, onChange, color, blocked }: StatusPickerProps) {
   const { colors } = useAppTheme();
   const accent = color ?? (colors.primary as string);
   const onAccent = color ? readableOn(color) : colors.onPrimary;
@@ -75,13 +75,20 @@ export function StatusPicker({ value, onChange, color }: StatusPickerProps) {
       {LIST_STATUSES.map((status) => {
         const meta = LISTS[status];
         const selected = value === status;
+        const reason = selected ? null : blocked?.[status];
         const fg = selected ? onAccent : colors.text;
         return (
           <Pressable
             key={status}
             accessibilityRole="radio"
-            accessibilityState={{ checked: selected }}
+            accessibilityState={{ checked: selected, disabled: !!reason }}
+            accessibilityHint={reason ?? undefined}
             onPress={() => {
+              if (reason) {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                Alert.alert(`Can't move to ${meta.title}`, reason);
+                return;
+              }
               Haptics.selectionAsync();
               onChange(status);
             }}
@@ -89,6 +96,7 @@ export function StatusPicker({ value, onChange, color }: StatusPickerProps) {
               styles.statusCell,
               styles.statusPill,
               { backgroundColor: selected ? accent : colors.fill },
+              reason && styles.disabled,
               pressed && styles.pressed,
             ]}>
             <Icon sf={selected ? meta.sfSelected : meta.sf} md={meta.md} size={17} color={selected ? fg : accent} />

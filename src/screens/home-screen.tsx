@@ -1,3 +1,4 @@
+import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { type Href, Link, router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -37,6 +38,7 @@ import {
   pickSummary,
   seasonLabel,
 } from '@/lib/anilist';
+import { isCaughtUp, isComplete, isUnaired, maxProgress, nextEpisodeLabel, premiereLabel } from '@/lib/airing';
 import { readableOn, showAccent, withAlpha } from '@/lib/color';
 import { useRequest } from '@/lib/use-request';
 import { type LibraryEntry, useLibrary } from '@/store/library';
@@ -268,7 +270,16 @@ function HeroSlide({
 
   const watching = entry?.status === 'watching';
   const nextEp = (entry?.progress ?? 0) + 1;
-  const action = watching
+  const waiting = watching
+    ? entry.progress >= maxProgress(anime)
+    : entry?.status === 'wishlist' && isUnaired(anime);
+  const action: { label: string; sf: SFSymbol; md: AndroidSymbol; run?: () => void } = waiting
+    ? {
+        label: watching ? nextEpisodeLabel(anime) : premiereLabel(anime),
+        sf: 'calendar',
+        md: 'event',
+      }
+    : watching
     ? { label: `Log Episode ${nextEp}`, sf: 'checkmark' as const, md: 'check' as const, run: () => increment(anime.id) }
     : entry?.status === 'wishlist'
       ? {
@@ -322,14 +333,23 @@ function HeroSlide({
           </View>
         ) : null}
         <View style={styles.heroActions}>
-          <PlatformPressable
-            haptic
-            onPress={action.run}
-            accessibilityRole="button"
-            style={[styles.primary, { backgroundColor: accent, boxShadow: `0 10px 30px ${withAlpha(accent, 0.45)}` }]}>
-            <Icon sf={action.sf} md={action.md} size={18} color={onAccent} />
-            <Text style={[styles.primaryLabel, { color: onAccent }]}>{action.label}</Text>
-          </PlatformPressable>
+          {action.run ? (
+            <PlatformPressable
+              haptic
+              onPress={action.run}
+              accessibilityRole="button"
+              style={[styles.primary, { backgroundColor: accent, boxShadow: `0 10px 30px ${withAlpha(accent, 0.45)}` }]}>
+              <Icon sf={action.sf} md={action.md} size={18} color={onAccent} />
+              <Text style={[styles.primaryLabel, { color: onAccent }]}>{action.label}</Text>
+            </PlatformPressable>
+          ) : (
+            <View style={[styles.primary, { backgroundColor: colors.fill }]}>
+              <Icon sf={action.sf} md={action.md} size={18} color={accent} />
+              <Text style={[styles.primaryLabel, { color: colors.text }]} numberOfLines={1}>
+                {action.label}
+              </Text>
+            </View>
+          )}
           <Link href={href(anime.id)} asChild>
             <PlatformPressable
               accessibilityRole="button"
@@ -351,7 +371,8 @@ function ContinueCard({ entry, width }: { entry: LibraryEntry; width: number }) 
   const increment = useLibrary((s) => s.incrementProgress);
   const accent = showAccent(entry.coverColor, colors.primary as string);
   const onAccent = readableOn(accent);
-  const done = entry.episodes != null && entry.progress >= entry.episodes;
+  const done = isComplete(entry, entry.progress);
+  const caughtUp = isCaughtUp(entry, entry.progress);
 
   return (
     <View
@@ -380,7 +401,12 @@ function ContinueCard({ entry, width }: { entry: LibraryEntry; width: number }) 
           </View>
         </PlatformPressable>
       </Link>
-      {done ? null : (
+      {done ? null : caughtUp ? (
+        <View style={[styles.plusOne, { backgroundColor: withAlpha(accent, 0.16) }]}>
+          <Icon sf="calendar" md="event" size={14} color={accent} />
+          <Text style={[Type.footnote, styles.plusOneLabel, { color: colors.text }]}>{nextEpisodeLabel(entry)}</Text>
+        </View>
+      ) : (
         <PlatformPressable
           haptic
           onPress={() => increment(entry.id)}

@@ -1,5 +1,5 @@
 import { Stack, router } from 'expo-router';
-import { type PropsWithChildren, useCallback, useState } from 'react';
+import { type PropsWithChildren, useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,6 +12,7 @@ import { EpisodeTiles } from '@/components/progress';
 import { RatingStars } from '@/components/rating-stars';
 import { AnimeShelf } from '@/components/shelf';
 import { ErrorState, LoadingState } from '@/components/states';
+import { airedCount, isUnaired, maxProgress, nextEpisodeLabel, premiereLabel, statusBlock } from '@/lib/airing';
 import { type AnimeSummary, formatLabel, getAnime, getRecommendations, pickSummary } from '@/lib/anilist';
 import { readableOn, showAccent, withAlpha } from '@/lib/color';
 import { useRequest } from '@/lib/use-request';
@@ -47,6 +48,12 @@ export function AnimeDetailScreen({ id }: { id: number }) {
   const recs = useRequest(`recs:${id}`, fetchRecs);
   const [expanded, setExpanded] = useState(false);
 
+  // Fresh details carry the latest airing state; keep the saved entry current.
+  const hasEntry = entry != null;
+  useEffect(() => {
+    if (details && hasEntry) useLibrary.getState().updateMeta([pickSummary(details)]);
+  }, [details, hasEntry]);
+
   // Library entries render instantly (and offline); details fill in when loaded.
   const anime: AnimeSummary | undefined = details ?? entry;
 
@@ -77,6 +84,13 @@ export function AnimeDetailScreen({ id }: { id: number }) {
       },
     ]);
 
+  const live = details ? pickSummary(details) : anime;
+  const unaired = isUnaired(live);
+  const blocked = {
+    watching: statusBlock(live, 'watching'),
+    watched: statusBlock(live, 'watched'),
+  };
+
   const primary = !entry
     ? {
         label: 'Add to Wishlist',
@@ -84,14 +98,14 @@ export function AnimeDetailScreen({ id }: { id: number }) {
         md: 'add' as const,
         run: () => setStatus(pickSummary(anime), 'wishlist'),
       }
-    : entry.status === 'wishlist'
+    : entry.status === 'wishlist' && !unaired
       ? {
           label: 'Start Watching',
           sf: 'play.fill' as const,
           md: 'play_arrow' as const,
           run: () => setStatus(pickSummary(anime), 'watching'),
         }
-      : entry.status === 'watching' && (entry.episodes == null || entry.progress < entry.episodes)
+      : entry.status === 'watching' && entry.progress < maxProgress(live)
         ? {
             label: `Log Episode ${entry.progress + 1}`,
             sf: 'checkmark' as const,
@@ -198,9 +212,16 @@ export function AnimeDetailScreen({ id }: { id: number }) {
           <Icon sf="checkmark.seal.fill" md="verified" size={20} color={accent} />
           <Text style={[styles.primaryLabel, { color: colors.text }]}>You finished this</Text>
         </View>
+      ) : entry && (unaired || entry.status === 'watching') ? (
+        <View style={[styles.primary, { backgroundColor: withAlpha(accent, 0.16) }]}>
+          <Icon sf="calendar" md="event" size={20} color={accent} />
+          <Text style={[styles.primaryLabel, { color: colors.text }]}>
+            {unaired ? premiereLabel(live) : live.nextAiringAt ? `Caught up · ${nextEpisodeLabel(live)}` : "You're caught up"}
+          </Text>
+        </View>
       ) : null}
 
-      {entry ? (
+      {entry && !unaired ? (
         <Section
           title="Episodes"
           accessory={
@@ -212,6 +233,7 @@ export function AnimeDetailScreen({ id }: { id: number }) {
           <EpisodeTiles
             progress={entry.progress}
             total={entry.episodes}
+            aired={airedCount(live)}
             color={accent}
             onSet={(n) => setProgress(id, n)}
           />
@@ -220,7 +242,12 @@ export function AnimeDetailScreen({ id }: { id: number }) {
 
       <Section title={entry ? 'Your list' : 'Add to a list'}>
         <View style={styles.padded}>
-          <StatusPicker value={entry?.status} onChange={(s) => setStatus(pickSummary(anime), s)} color={accent} />
+          <StatusPicker
+            value={entry?.status}
+            onChange={(s) => setStatus(pickSummary(live), s)}
+            color={accent}
+            blocked={blocked}
+          />
         </View>
       </Section>
 

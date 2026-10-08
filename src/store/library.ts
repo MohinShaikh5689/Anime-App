@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import type { ListStatus } from '@/constants/lists';
 import type { AnimeSummary } from '@/lib/anilist';
+import { isComplete, isUnaired, maxProgress, statusBlock } from '@/lib/airing';
 
 export type LibraryEntry = AnimeSummary & {
   status: ListStatus;
@@ -51,6 +52,8 @@ type LibraryState = {
   incrementProgress: (id: number) => void;
   setRating: (id: number, rating: number | null) => void;
   remove: (id: number) => void;
+  /** Refreshes cached AniList metadata (airing state) without counting as a user edit. */
+  updateMeta: (metas: AnimeSummary[]) => void;
 
   /** Binds local data to a user, uploading data created before sign-in. */
   claim: (userId: string) => void;
@@ -59,10 +62,32 @@ type LibraryState = {
   reset: () => void;
 };
 
-function clampProgress(progress: number, episodes: number | null) {
-  const max = episodes ?? Number.MAX_SAFE_INTEGER;
-  return Math.max(0, Math.min(Math.round(progress), max));
+/** Progress can't pass the last aired episode. */
+function clampProgress(progress: number, entry: AnimeSummary) {
+  return Math.max(0, Math.min(Math.round(progress), maxProgress(entry)));
 }
+
+/** Copies fresh metadata over an entry, ignoring fields the source doesn't carry. */
+function mergeMeta<T extends AnimeSummary>(entry: T, anime: AnimeSummary): T {
+  const next = { ...entry };
+  for (const [key, value] of Object.entries(anime)) {
+    if (value !== undefined) (next as Record<string, unknown>)[key] = value;
+  }
+  return next;
+}
+
+/** The list a show belongs in after logging episodes. */
+function statusForProgress(entry: LibraryEntry, progress: number): ListStatus {
+  // The final episode is watched: it's finished.
+  if (isComplete(entry, progress)) return 'watched';
+  if (entry.status === 'wishlist' && progress > 0) return 'watching';
+  // Un-logging the finale of a finished show puts it back in progress.
+  if (entry.status === 'watched' && entry.episodes != null && progress < entry.episodes) return 'watching';
+  return entry.status;
+}
+
+/** Airing metadata is device-local (not synced), so keep it across remote merges. */
+const LOCAL_META = ['airingStatus', 'airedEpisodes', 'nextAiringAt', 'bannerUrl'] as const;
 
 function withoutKey<T>(record: Record<number, T>, id: number) {
   if (!(id in record)) return record;
@@ -131,28 +156,35 @@ export const useLibrary = create<LibraryState>()(
             const existing = state.entries[anime.id];
             // Refresh cached metadata (episode counts change for airing shows).
             const entry: LibraryEntry = existing
-              ? { ...existing, ...anime, status, updatedAt: now }
+              ? { ...mergeMeta(existing, anime), status, updatedAt: now }
               : { ...anime, status, progress: 0, rating: null, addedAt: now, updatedAt: now };
+            if (statusBlock(entry, status)) return state;
             if (status === 'watched' && entry.episodes) entry.progress = entry.episodes;
+            entry.progress = clampProgress(entry.progress, entry);
+            if (status === 'watching' && isComplete(entry, entry.progress) && entry.progress > 0) {
+              // Re-watching a finished show starts it over.
+              entry.progress = 0;
+            }
             return write(state, entry);
           }),
 
         setProgress: (id, progress) =>
           set((state) => {
             const entry = state.entries[id];
-            if (!entry) return state;
-            const next = clampProgress(progress, entry.episodes);
-            // Starting a show from the wishlist moves it to Watching.
-            const status = entry.status === 'wishlist' && next > 0 ? 'watching' : entry.status;
+            if (!entry || isUnaired(entry)) return state;
+            const next = clampProgress(progress, entry);
+            if (next === entry.progress) return state;
+            const status = statusForProgress(entry, next);
             return write(state, { ...entry, progress: next, status, updatedAt: Date.now() });
           }),
 
         incrementProgress: (id) =>
           set((state) => {
             const entry = state.entries[id];
-            if (!entry) return state;
-            const next = clampProgress(entry.progress + 1, entry.episodes);
-            const status = entry.status === 'wishlist' ? 'watching' : entry.status;
+            if (!entry || isUnaired(entry)) return state;
+            const next = clampProgress(entry.progress + 1, entry);
+            if (next === entry.progress) return state;
+            const status = statusForProgress(entry, next);
             return write(state, { ...entry, progress: next, status, updatedAt: Date.now() });
           }),
 
@@ -169,6 +201,24 @@ export const useLibrary = create<LibraryState>()(
             dirty: withoutKey(state.dirty, id),
             removed: { ...state.removed, [id]: Date.now() },
           })),
+
+        updateMeta: (metas) =>
+          set((state) => {
+            let next: Partial<LibraryState> | null = null;
+            for (const anime of metas) {
+              const entry = state.entries[anime.id];
+              if (!entry) continue;
+              const merged = mergeMeta(entry, anime);
+              const s = (next ?? state) as LibraryState;
+              // A show you were caught up on just finished airing: it's watched.
+              if (entry.status === 'watching' && isComplete(merged, merged.progress)) {
+                next = { ...s, ...write(s, { ...merged, status: 'watched', updatedAt: Date.now() }) };
+              } else {
+                next = { ...s, entries: { ...s.entries, [anime.id]: merged } };
+              }
+            }
+            return next ?? state;
+          }),
 
         claim: (userId) =>
           set((state) => {
@@ -213,7 +263,9 @@ export const useLibrary = create<LibraryState>()(
               if (row.deleted_at) {
                 entries = withoutKey(entries, id);
               } else {
-                entries = { ...entries, [id]: fromRemote(row) };
+                const entry = fromRemote(row);
+                if (local) for (const key of LOCAL_META) (entry as Record<string, unknown>)[key] = local[key];
+                entries = { ...entries, [id]: entry };
               }
               dirty = withoutKey(dirty, id);
               removed = withoutKey(removed, id);

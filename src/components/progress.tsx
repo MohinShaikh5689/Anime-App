@@ -73,17 +73,20 @@ const TILE = 52;
 export function EpisodeTiles({
   progress,
   total,
+  aired,
   color,
   onSet,
 }: {
   progress: number;
   total: number | null;
+  /** Episodes released so far; later tiles are locked. Null when unknown. */
+  aired?: number | null;
   color: string;
   onSet: (episode: number) => void;
 }) {
   const { colors } = useAppTheme();
   const list = useRef<FlatList<number>>(null);
-  const count = total ?? progress + 12;
+  const count = total ?? (aired != null ? Math.max(aired + 1, progress) : progress + 12);
   const data = Array.from({ length: count }, (_, i) => i + 1);
   const next = Math.min(progress + 1, count);
   const onColor = readableOn(color);
@@ -107,26 +110,33 @@ export function EpisodeTiles({
       initialNumToRender={20}
       renderItem={({ item: n }) => {
         const watched = n <= progress;
-        const isNext = n === progress + 1 && (total == null || progress < total);
+        const locked = aired != null && n > aired;
+        const isNext = !locked && n === progress + 1 && (total == null || progress < total);
         return (
           <Pressable
+            disabled={locked}
             onPress={() => {
               Haptics.selectionAsync();
               onSet(n === progress ? n - 1 : n);
             }}
             accessibilityRole="button"
-            accessibilityLabel={`Episode ${n}${watched ? ', watched' : isNext ? ', up next' : ''}`}
+            accessibilityState={{ disabled: locked }}
+            accessibilityLabel={`Episode ${n}${watched ? ', watched' : isNext ? ', up next' : locked ? ', not aired yet' : ''}`}
             style={({ pressed }) => [
               styles.tile,
+              locked && styles.locked,
               {
-                backgroundColor: watched ? color : (colors.surface as string),
-                borderColor: isNext ? color : 'transparent',
+                backgroundColor: watched ? color : locked ? 'transparent' : (colors.surface as string),
+                borderColor: isNext ? color : locked ? (colors.separator as string) : 'transparent',
                 opacity: pressed ? 0.7 : 1,
               },
             ]}>
             <Text
               maxFontSizeMultiplier={1.3}
-              style={[styles.tileNumber, { color: watched ? onColor : isNext ? color : (colors.text as string) }]}>
+              style={[
+                styles.tileNumber,
+                { color: watched ? onColor : isNext ? color : locked ? (colors.textSecondary as string) : (colors.text as string) },
+              ]}>
               {n}
             </Text>
           </Pressable>
@@ -161,5 +171,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  locked: { borderStyle: 'dashed' },
   tileNumber: { fontFamily: Fonts.display, fontSize: 18 },
 });

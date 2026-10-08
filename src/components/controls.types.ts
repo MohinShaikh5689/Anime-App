@@ -18,6 +18,8 @@ export type StatusPickerProps = {
   onChange: (status: ListStatus) => void;
   /** Accent for the selected option (e.g. the show's colour). */
   color?: string;
+  /** Lists the show can't move to yet, with the reason shown on tap. */
+  blocked?: Partial<Record<ListStatus, string | null>>;
 };
 
 export type EpisodeStepperProps = {

@@ -7,6 +7,7 @@ import { IncrementButton, ListSwitcher } from '@/components/controls';
 import { PosterCard } from '@/components/poster-card';
 import { EmptyState } from '@/components/states';
 import { LIST_STATUSES, LISTS } from '@/constants/lists';
+import { isUnaired, maxProgress, nextEpisodeLabel, premiereLabel, statusBlock } from '@/lib/airing';
 import { GRID_GAP, GRID_PADDING, useGrid } from '@/lib/use-grid';
 import { type LibraryEntry, useLibrary } from '@/store/library';
 import { useUi } from '@/store/ui';
@@ -16,9 +17,9 @@ import { Type } from '@/theme/type';
 function subtitleFor(e: LibraryEntry) {
   switch (e.status) {
     case 'watching':
-      return `Episode ${e.progress}${e.episodes ? ` of ${e.episodes}` : ''}`;
+      return e.progress >= maxProgress(e) ? nextEpisodeLabel(e) : `Episode ${e.progress}${e.episodes ? ` of ${e.episodes}` : ''}`;
     case 'wishlist':
-      return e.episodes ? `${e.episodes} episodes` : 'Not started';
+      return isUnaired(e) ? premiereLabel(e) : e.episodes ? `${e.episodes} episodes` : 'Not started';
     case 'watched':
       return e.rating ? `Your rating ${e.rating}/5` : 'Not rated yet';
     case 'dropped':
@@ -29,7 +30,8 @@ function subtitleFor(e: LibraryEntry) {
 /** Long-press menu: move a show to another list or remove it. */
 function showQuickActions(entry: LibraryEntry) {
   const { setStatus, remove } = useLibrary.getState();
-  const targets = LIST_STATUSES.filter((s) => s !== entry.status);
+  // Only offer lists the show can move to (nothing unaired in Watching, nothing airing in Watched).
+  const targets = LIST_STATUSES.filter((s) => s !== entry.status && !statusBlock(entry, s));
   const run = (index: number) => {
     if (index < targets.length) setStatus(entry, targets[index]);
     else if (index === targets.length) remove(entry.id);
@@ -84,7 +86,7 @@ export function LibraryScreen() {
         data={items}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => {
-          const finished = item.episodes != null && item.progress >= item.episodes;
+          const canLog = item.progress < maxProgress(item);
           return (
             <View>
               <PosterCard
@@ -98,7 +100,7 @@ export function LibraryScreen() {
                 }
                 onLongPress={() => showQuickActions(item)}
                 accessory={
-                  item.status === 'watching' && !finished ? (
+                  item.status === 'watching' && canLog ? (
                     <IncrementButton
                       floating
                       onPress={() => increment(item.id)}

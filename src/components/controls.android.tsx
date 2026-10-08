@@ -2,7 +2,7 @@
  * Android controls using Material 3 components from react-native-paper.
  * iOS uses `controls.tsx` (Liquid Glass).
  */
-import { StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import {
   Button,
   Chip as PaperChip,
@@ -38,13 +38,14 @@ export function IncrementButton({ onPress, accessibilityLabel }: IncrementButton
   );
 }
 
-export function StatusPicker({ value, onChange }: StatusPickerProps) {
+export function StatusPicker({ value, onChange, blocked }: StatusPickerProps) {
   const { colors } = useAppTheme();
   return (
     <View style={styles.chips}>
       {LIST_STATUSES.map((status) => {
         const meta = LISTS[status];
         const selected = value === status;
+        const reason = selected ? null : blocked?.[status];
         return (
           <PaperChip
             key={status}
@@ -59,9 +60,11 @@ export function StatusPicker({ value, onChange }: StatusPickerProps) {
                 color={selected ? colors.primary : colors.textSecondary}
               />
             )}
-            onPress={() => onChange(status)}
+            onPress={() => (reason ? Alert.alert(`Can't move to ${meta.title}`, reason) : onChange(status))}
+            style={reason ? { opacity: 0.45 } : undefined}
             accessibilityRole="radio"
-            accessibilityState={{ checked: selected }}>
+            accessibilityHint={reason ?? undefined}
+            accessibilityState={{ checked: selected, disabled: !!reason }}>
             {meta.title}
           </PaperChip>
         );

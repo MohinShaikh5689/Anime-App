@@ -52,9 +52,12 @@ function RootStack() {
           options={{
             ...screenOptions,
             headerShown: true,
-            title: 'Account',
+            title: Platform.OS === 'ios' ? '' : 'Account',
             presentation: 'modal',
-            headerTransparent: false,
+            // iOS: the profile's cover wall runs under a see-through bar.
+            headerTransparent: Platform.OS === 'ios',
+            headerBlurEffect: undefined,
+            scrollEdgeEffects: { top: 'hidden' },
             headerLargeTitle: false,
             headerRight: Platform.OS === 'ios' ? () => <DoneButton /> : undefined,
           }}

@@ -1,4 +1,6 @@
-# Anime Tracker
+# Tsuzuku 続く
+
+An anime and manga tracker. *Tsuzuku* (続く, "to be continued") is the card that ends almost every episode.
 
 A cross-platform (iOS + Android) anime tracker built with **React Native**, **Expo SDK 57**, TypeScript and **Expo Router**.
 
@@ -93,8 +95,8 @@ Expo Go is fine for trying the app, but some native features only show fully in 
 `.github/workflows/ios-dev-client.yml` builds an **unsigned** iOS dev client on a GitHub-hosted Mac running macOS 26 and Xcode 26:
 
 1. Go to **Actions** → **iOS dev client (unsigned)** → **Run workflow**, and pick a target:
-   - `device` produces `AnimeTracker-dev-unsigned.ipa`. Sign and install it with your own Apple ID using a sideloading tool such as [Sideloadly](https://sideloadly.io) or [AltStore](https://altstore.io). With a free Apple ID the app expires after 7 days and has to be re-signed.
-   - `simulator` produces `AnimeTracker-dev-simulator.zip`. Unzip it and run `xcrun simctl install booted AnimeTracker.app`.
+   - `device` produces `Tsuzuku-dev-unsigned.ipa`. Sign and install it with your own Apple ID using a sideloading tool such as [Sideloadly](https://sideloadly.io) or [AltStore](https://altstore.io). With a free Apple ID the app expires after 7 days and has to be re-signed.
+   - `simulator` produces `Tsuzuku-dev-simulator.zip`. Unzip it and run `xcrun simctl install booted Tsuzuku.app`.
 2. Download the build from the run's **Artifacts** section.
 3. Run `npx expo start --dev-client` and open the project from the dev client.
 

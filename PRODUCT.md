@@ -10,7 +10,7 @@ adaptive
 Anime fans who keep track of what they watch, planned for a public App Store and Google Play release. They open the app for three jobs in roughly equal measure: logging episodes on what they are currently watching, deciding what to watch next from their own wishlist, and discovering new anime and the characters in them. Typical use is short sessions around watching: on the couch before or after an episode, often in the evening.
 
 ## Product Purpose
-Anime Tracker keeps a personal anime library in four lists (Watching, Wishlist, Watched, Dropped) with episode progress and a personal 1–5 star rating, backed by the AniList catalogue for search, trending, seasonal and top-rated browsing, anime details and characters. Success is a user who trusts the app as the one place that knows where they are in every show, and who enjoys opening it.
+Tsuzuku keeps a personal anime library in four lists (Watching, Wishlist, Watched, Dropped) with episode progress and a personal 1–5 star rating, backed by the AniList catalogue for search, trending, seasonal and top-rated browsing, anime details and characters. Success is a user who trusts the app as the one place that knows where they are in every show, and who enjoys opening it.
 
 ## Positioning
 The owner's explicit brief: it should be relaxing to use and not feel like any other anime tracker. Most trackers are dense, stat-heavy database front ends; this one is a calm companion for watching, not a spreadsheet of titles.
@@ -29,7 +29,7 @@ The owner's explicit brief: it should be relaxing to use and not feel like any o
 - Existing features to preserve: Home, Library (four lists), Search with genre browsing, anime detail with list status, episode stepper, rating, synopsis and characters; character detail sheet; account screen with sync status, sign out and delete account.
 
 ## Brand Commitments
-- Name: Anime Tracker.
+- Name: Tsuzuku (続く, "to be continued"). Bundle IDs, slug and URL scheme keep the original `animetracker` / `anime-app` identifiers.
 - Feel requested by the owner: relaxing, calm, fun to use, distinct from other anime trackers.
 - No logo or brand assets exist yet.
 

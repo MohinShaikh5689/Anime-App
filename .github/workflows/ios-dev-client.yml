@@ -2,10 +2,10 @@
 #
 # Run it from Actions → "iOS dev client (unsigned)" → Run workflow, then download
 # the artifact from the run summary:
-#   - device:    AnimeTracker-dev-unsigned.ipa. Sign and install it with your own
+#   - device:    Tsuzuku-dev-unsigned.ipa. Sign and install it with your own
 #                Apple ID using a sideloading tool (Sideloadly, AltStore, etc.).
-#   - simulator: AnimeTracker-dev-simulator.zip. Unzip it, then
-#                `xcrun simctl install booted AnimeTracker.app`.
+#   - simulator: Tsuzuku-dev-simulator.zip. Unzip it, then
+#                `xcrun simctl install booted Tsuzuku.app`.
 # Then run `npx expo start --dev-client` and open the project from the dev client.
 name: iOS dev client (unsigned)
 

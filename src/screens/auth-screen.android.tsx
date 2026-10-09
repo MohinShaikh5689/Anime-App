@@ -3,11 +3,14 @@ import { useRef, useState } from 'react';
 import { KeyboardAvoidingView, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Button, HelperText, Text, TextInput, useTheme, type MD3Theme } from 'react-native-paper';
 import type { TextInput as NativeTextInput } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PosterWall } from '@/components/poster-wall';
 import { Fonts } from '@/theme/fonts';
 import { useAuthForm } from '@/screens/use-auth-form';
+
+const APP_ICON = require('../../assets/images/splash-icon.png');
 
 export function AuthScreen() {
   const { colors } = useTheme<MD3Theme>();
@@ -28,8 +31,9 @@ export function AuthScreen() {
           { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 },
         ]}>
         <View style={styles.hero}>
+          <Image source={APP_ICON} style={styles.mark} accessibilityLabel="Tsuzuku" />
           <Text variant="headlineMedium" style={[styles.center, styles.display]}>
-            {signUp ? 'Create account' : 'Welcome back'}
+            {signUp ? 'Create account' : 'Tsuzuku'}
           </Text>
           <Text variant="bodyLarge" style={[styles.center, { color: colors.onSurfaceVariant }]}>
             {signUp
@@ -104,6 +108,7 @@ export function AuthScreen() {
 }
 
 const styles = StyleSheet.create({
+  mark: { width: 72, height: 72, alignSelf: 'center', marginBottom: 6 },
   fill: { flex: 1 },
   content: { flexGrow: 1, justifyContent: 'flex-end', paddingHorizontal: 24, gap: 12 },
   hero: { alignItems: 'center', gap: 8, marginBottom: 16 },

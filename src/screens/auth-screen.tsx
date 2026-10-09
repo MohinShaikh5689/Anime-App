@@ -1,4 +1,5 @@
 /** iOS sign-in: inset grouped fields and a system filled primary button. */
+import { Image } from 'expo-image';
 import { useRef } from 'react';
 import {
   KeyboardAvoidingView,
@@ -18,6 +19,8 @@ import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
 import { Type } from '@/theme/type';
 
+const APP_ICON = require('../../assets/images/splash-icon.png');
+
 export function AuthScreen() {
   const { colors } = useAppTheme();
   const form = useAuthForm();
@@ -35,8 +38,9 @@ export function AuthScreen() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.content}>
         <View style={styles.hero}>
+          <Image source={APP_ICON} style={styles.mark} accessibilityLabel="Tsuzuku" />
           <Text style={[styles.title, { color: colors.text }]}>
-            {signUp ? 'Create Account' : 'Anime Tracker'}
+            {signUp ? 'Create Account' : 'Tsuzuku'}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             {signUp
@@ -115,6 +119,7 @@ export function AuthScreen() {
 }
 
 const styles = StyleSheet.create({
+  mark: { width: 72, height: 72, alignSelf: 'center', marginBottom: 6 },
   fill: { flex: 1 },
   content: { flexGrow: 1, justifyContent: 'flex-end', padding: 20, paddingBottom: 40, gap: 12 },
   hero: { alignItems: 'center', gap: 8, marginBottom: 20 },

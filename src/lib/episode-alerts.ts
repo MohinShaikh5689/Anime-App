@@ -157,7 +157,7 @@ export async function sendTestAlert(delaySeconds = 5) {
   await Notifications.scheduleNotificationAsync({
     identifier: 'test-alert',
     content: {
-      title: show?.title ?? 'Anime Tracker',
+      title: show?.title ?? 'Tsuzuku',
       body: show ? `Episode ${show.progress + 1} is out now (test alert)` : 'New episode alerts are working',
       data: show ? { animeId: show.id } : {},
       sound: 'default',

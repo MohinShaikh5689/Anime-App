@@ -88,7 +88,7 @@ async function rebuild() {
   const N = Notifications!;
   const { episodeAlerts } = useSettings.getState();
   if (!episodeAlerts || !(await hasPermission())) {
-    await N.cancelAllScheduledNotificationsAsync();
+    await cancelEpisodeAlerts();
     lastRun = Date.now();
     return;
   }
@@ -104,9 +104,9 @@ async function rebuild() {
     .slice(0, MAX_SCHEDULED);
 
   await ensureChannel();
-  // We own every scheduled notification, so a full rebuild is simplest and also
-  // drops alerts for shows that left Watching or episodes that were rescheduled.
-  await N.cancelAllScheduledNotificationsAsync();
+  // A full rebuild is simplest and also drops alerts for shows that left Watching
+  // or episodes that were rescheduled.
+  await cancelEpisodeAlerts();
   for (const s of upcoming) {
     await N.scheduleNotificationAsync({
       identifier: `ep-${s.animeId}-${s.episode}`,
@@ -126,10 +126,49 @@ async function rebuild() {
   lastRun = Date.now();
 }
 
+const isEpisodeAlert = (id: string) => id.startsWith('ep-');
+
+/** Cancels scheduled episode alerts, leaving anything else (like a test alert) alone. */
+async function cancelEpisodeAlerts() {
+  const N = Notifications!;
+  const pending = await N.getAllScheduledNotificationsAsync();
+  await Promise.all(
+    pending.filter((r) => isEpisodeAlert(r.identifier)).map((r) => N.cancelScheduledNotificationAsync(r.identifier))
+  );
+}
+
 /** How many episode alerts are currently scheduled. */
 export async function scheduledAlertCount() {
   if (!Notifications) return 0;
-  return (await Notifications.getAllScheduledNotificationsAsync()).length;
+  return (await Notifications.getAllScheduledNotificationsAsync()).filter((r) => isEpisodeAlert(r.identifier))
+    .length;
+}
+
+/**
+ * Sends a sample alert in a few seconds, styled like a real one for a show you're
+ * watching, so you can check notifications work (lock the phone to see it there).
+ */
+export async function sendTestAlert(delaySeconds = 5) {
+  if (!Notifications || !(await requestAlertPermission())) return false;
+  const watching = Object.values(useLibrary.getState().entries)
+    .filter((e) => e.status === 'watching' && !isManga(e))
+    .sort((a, b) => (a.nextAiringAt ?? Infinity) - (b.nextAiringAt ?? Infinity));
+  const show = watching[0];
+  await Notifications.scheduleNotificationAsync({
+    identifier: 'test-alert',
+    content: {
+      title: show?.title ?? 'Anime Tracker',
+      body: show ? `Episode ${show.progress + 1} is out now (test alert)` : 'New episode alerts are working',
+      data: show ? { animeId: show.id } : {},
+      sound: 'default',
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds: delaySeconds,
+      channelId: CHANNEL,
+    },
+  });
+  return true;
 }
 
 /** IDs of shows in Watching (anime only), as a stable string for change detection. */

@@ -21,7 +21,13 @@ import { Icon } from '@/components/icon';
 import { Art, Poster } from '@/components/poster';
 import { LIST_STATUSES, listMeta } from '@/constants/lists';
 import { isManga } from '@/lib/anilist';
-import { alertsSupported, refreshEpisodeAlerts, requestAlertPermission, scheduledAlertCount } from '@/lib/episode-alerts';
+import {
+  alertsSupported,
+  refreshEpisodeAlerts,
+  requestAlertPermission,
+  scheduledAlertCount,
+  sendTestAlert,
+} from '@/lib/episode-alerts';
 import { readableOn, showAccent, withAlpha } from '@/lib/color';
 import { supabase, useAuth } from '@/lib/supabase';
 import { syncLibrary, useSyncStatus } from '@/lib/sync';
@@ -219,6 +225,25 @@ export function AccountScreen() {
           <View style={[styles.card, styles.group, { backgroundColor: colors.surface }]}>
             <EpisodeAlertsRow accent={accent} />
           </View>
+          <Pressable
+            onPress={async () => {
+              const ok = await sendTestAlert();
+              Alert.alert(
+                ok ? 'Test alert on its way' : 'Notifications are off',
+                ok
+                  ? 'It arrives in about 5 seconds. Lock your phone to see it on the lock screen.'
+                  : 'Allow notifications for this app in Settings first.',
+                ok ? undefined : [
+                  { text: 'Not Now', style: 'cancel' },
+                  { text: 'Open Settings', onPress: () => Linking.openSettings() },
+                ]
+              );
+            }}
+            hitSlop={8}
+            accessibilityRole="button"
+            style={styles.testAlert}>
+            <Text style={[Type.subhead, styles.testAlertText, { color: accent }]}>Send a Test Alert</Text>
+          </Pressable>
         </Section>
       ) : null}
 
@@ -514,5 +539,7 @@ const styles = StyleSheet.create({
   rowIcon: { width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   rowBody: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, paddingVertical: 10, paddingRight: 16 },
   rowText: { flex: 1, gap: 2 },
+  testAlert: { alignSelf: 'flex-start', paddingHorizontal: 4, paddingVertical: 2 },
+  testAlertText: { fontWeight: '600' },
   footer: { textAlign: 'center', marginTop: 28, lineHeight: 18 },
 });

@@ -168,6 +168,43 @@ export async function getAiringInfo(ids: number[], signal?: AbortSignal) {
   return out;
 }
 
+export type ScheduledEpisode = { animeId: number; title: string; episode: number; airingAt: number };
+
+/** Every announced upcoming episode for the given shows (AniList publishes whole seasons ahead). */
+export async function getAiringSchedules(ids: number[], signal?: AbortSignal) {
+  const out: ScheduledEpisode[] = [];
+  for (let i = 0; i < ids.length; i += 25) {
+    const data = await request<{
+      Page: {
+        media: {
+          id: number;
+          title: RawMedia['title'];
+          airingSchedule: { nodes: { episode: number; airingAt: number }[] };
+        }[];
+      };
+    }>(
+      `query ($ids: [Int]) {
+        Page(perPage: 25) {
+          media(id_in: $ids, type: ANIME) {
+            id
+            title { romaji english }
+            airingSchedule(notYetAired: true, perPage: 25) { nodes { episode airingAt } }
+          }
+        }
+      }`,
+      { ids: ids.slice(i, i + 25) },
+      signal
+    );
+    for (const m of data.Page.media) {
+      const title = m.title.english || m.title.romaji || 'Untitled';
+      for (const n of m.airingSchedule.nodes) {
+        out.push({ animeId: m.id, title, episode: n.episode, airingAt: n.airingAt * 1000 });
+      }
+    }
+  }
+  return out;
+}
+
 function toSummary(m: RawMedia): AnimeSummary {
   return {
     id: m.id,

@@ -1,13 +1,15 @@
 import Constants from 'expo-constants';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   useWindowDimensions,
   View,
@@ -19,10 +21,12 @@ import { Icon } from '@/components/icon';
 import { Art, Poster } from '@/components/poster';
 import { LIST_STATUSES, listMeta } from '@/constants/lists';
 import { isManga } from '@/lib/anilist';
+import { alertsSupported, refreshEpisodeAlerts, requestAlertPermission, scheduledAlertCount } from '@/lib/episode-alerts';
 import { readableOn, showAccent, withAlpha } from '@/lib/color';
 import { supabase, useAuth } from '@/lib/supabase';
 import { syncLibrary, useSyncStatus } from '@/lib/sync';
 import { type LibraryEntry, useLibrary } from '@/store/library';
+import { useSettings } from '@/store/settings';
 import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
 import { Type } from '@/theme/type';
@@ -210,6 +214,14 @@ export function AccountScreen() {
         </Section>
       ) : null}
 
+      {alertsSupported ? (
+        <Section title="Notifications">
+          <View style={[styles.card, styles.group, { backgroundColor: colors.surface }]}>
+            <EpisodeAlertsRow accent={accent} />
+          </View>
+        </Section>
+      ) : null}
+
       <Section title="Account">
         <View style={[styles.card, styles.group, { backgroundColor: colors.surface }]}>
           <Row
@@ -251,6 +263,71 @@ export function AccountScreen() {
         Data from AniList, MangaDex and MangaUpdates{'\n'}Version {Constants.expoConfig?.version ?? '1.0.0'}
       </Text>
     </ScrollView>
+  );
+}
+
+/** On/off switch for new-episode alerts, with how many are scheduled. */
+function EpisodeAlertsRow({ accent }: { accent: string }) {
+  const { colors } = useAppTheme();
+  const enabled = useSettings((s) => s.episodeAlerts);
+  const setEnabled = useSettings((s) => s.setEpisodeAlerts);
+  const watchingIds = useLibrary((s) =>
+    Object.values(s.entries)
+      .filter((e) => e.status === 'watching' && !isManga(e))
+      .map((e) => e.id)
+      .join(',')
+  );
+  const [count, setCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    refreshEpisodeAlerts(true).then(() => scheduledAlertCount().then((n) => live && setCount(n)));
+    return () => {
+      live = false;
+    };
+  }, [enabled, watchingIds]);
+
+  const toggle = async (on: boolean) => {
+    if (on && !(await requestAlertPermission())) {
+      Alert.alert(
+        'Notifications are off',
+        'Allow notifications for this app in Settings to get new-episode alerts.',
+        [
+          { text: 'Not Now', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ]
+      );
+      return;
+    }
+    setEnabled(on);
+  };
+
+  const detail = !enabled
+    ? 'Get a notification when a show you’re watching airs'
+    : count == null
+      ? 'Checking schedules…'
+      : count === 0
+        ? 'No upcoming episodes for shows in Watching'
+        : `${count} upcoming episode${count === 1 ? '' : 's'} scheduled`;
+
+  return (
+    <View style={styles.row}>
+      <View style={[styles.rowIcon, { backgroundColor: withAlpha(accent, 0.16) }]}>
+        <Icon sf="bell.badge.fill" md="notifications_active" size={17} color={accent} />
+      </View>
+      <View style={styles.rowBody}>
+        <View style={styles.rowText}>
+          <Text style={[Type.body, { color: colors.text }]}>New episode alerts</Text>
+          <Text style={[Type.footnote, { color: colors.textSecondary }]}>{detail}</Text>
+        </View>
+        <Switch
+          value={enabled}
+          onValueChange={toggle}
+          trackColor={{ true: accent }}
+          accessibilityLabel="New episode alerts"
+        />
+      </View>
+    </View>
   );
 }
 

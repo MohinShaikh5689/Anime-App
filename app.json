@@ -2,7 +2,7 @@
   "expo": {
     "name": "Anime Tracker",
     "slug": "anime-app",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "animetracker",
@@ -39,7 +39,14 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      "./plugins/with-local-notifications-only",
+      [
+        "expo-notifications",
+        {
+          "color": "#6C5CFF"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
@@ -52,7 +59,7 @@
     },
     "owner": "mohin.shaikh",
     "runtimeVersion": {
-      "policy": "sdkVersion"
+      "policy": "appVersion"
     },
     "updates": {
       "url": "https://u.expo.dev/cdc751f6-cf63-41a0-b997-66e47e019725"

@@ -209,13 +209,17 @@ export async function browseAnime(options: BrowseOptions, signal?: AbortSignal) 
   const { search, genre, season, seasonYear, perPage = 30, kind = 'anime' } = options;
   const sort = options.sort ?? (search ? 'SEARCH_MATCH' : 'POPULARITY_DESC');
   const { type, country } = KIND_FILTER[kind];
+  // AniList treats `countryOfOrigin: null` as a filter that matches nothing, so the
+  // argument is only included when a country is wanted.
+  const countryArg = country ? ', countryOfOrigin: $country' : '';
+  const countryVar = country ? ', $country: CountryCode' : '';
   const data = await request<{ Page: { media: RawMedia[] } }>(
-    `query ($search: String, $genre: String, $season: MediaSeason, $seasonYear: Int, $sort: [MediaSort], $perPage: Int, $type: MediaType, $country: CountryCode) {
+    `query ($search: String, $genre: String, $season: MediaSeason, $seasonYear: Int, $sort: [MediaSort], $perPage: Int, $type: MediaType${countryVar}) {
       Page(perPage: $perPage) {
-        media(search: $search, genre: $genre, season: $season, seasonYear: $seasonYear, sort: $sort, type: $type, countryOfOrigin: $country, isAdult: false) { ${SUMMARY_FIELDS} }
+        media(search: $search, genre: $genre, season: $season, seasonYear: $seasonYear, sort: $sort, type: $type${countryArg}, isAdult: false) { ${SUMMARY_FIELDS} }
       }
     }`,
-    { search, genre, season, seasonYear, sort: [sort], perPage, type, country },
+    { search, genre, season, seasonYear, sort: [sort], perPage, type, ...(country ? { country } : {}) },
     signal
   );
   return data.Page.media.map(toSummary);

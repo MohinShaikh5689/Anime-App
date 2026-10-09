@@ -80,7 +80,7 @@ export function SearchResults({ query }: { query: string }) {
         sf="magnifyingglass"
         md="search_off"
         title="No results"
-        body={`Nothing on AniList matches “${q}”.`}
+        body={`No ${KIND_LABELS[KINDS.indexOf(kind)].toLowerCase()} matches “${q}”. Try ${KIND_LABELS.filter((_, i) => KINDS[i] !== kind).join(' or ')} above.`}
       />
     );
   }

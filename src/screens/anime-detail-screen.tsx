@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChapterRow, chapterCount, chapterTarget, ReleaseBanner, useChapters } from '@/components/chapters';
 import { CharacterRow } from '@/components/character-row';
 import { ActionButton, StatusPicker } from '@/components/controls';
+import { Fade } from '@/components/fade';
 import { Icon } from '@/components/icon';
 import { PlatformPressable } from '@/components/motion';
 import { Art } from '@/components/poster';
@@ -181,16 +182,12 @@ export function AnimeDetailScreen({ id }: { id: number }) {
 
       <View style={{ height: artHeight }}>
         <Art uri={anime.coverUrl} color={anime.coverColor} style={StyleSheet.absoluteFill} contentPosition="top" />
-        <View
-          pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              experimental_backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 18%, ${withAlpha(canvas, 0)} 42%, ${withAlpha(canvas, 0.82)} 74%, ${canvas} 100%)`,
-            },
-          ]}
-        />
-        <View style={styles.heroBody}>
+        {/* Keeps the status bar and back button legible over bright art. */}
+        <Fade color="#000000" height={150} max={0.5} flip style={styles.artTop} />
+        {/* Title block on solid page colour, so it reads over any artwork. */}
+        <View style={styles.heroBottom}>
+          <Fade color={canvas} height={110} />
+          <View style={[styles.heroBody, { backgroundColor: canvas }]}>
           <Text
             style={[styles.title, { color: colors.text, fontSize: size, lineHeight: size + 4 }]}
             numberOfLines={3}
@@ -213,6 +210,7 @@ export function AnimeDetailScreen({ id }: { id: number }) {
             <Text style={[Type.subhead, { color: colors.textSecondary }]} numberOfLines={1}>
               {meta.join('  ·  ')}
             </Text>
+          </View>
           </View>
         </View>
       </View>
@@ -426,16 +424,10 @@ function Section({ title, accessory, children }: PropsWithChildren<{ title: stri
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   loading: { justifyContent: 'center' },
-  heroBody: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 4,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    gap: 6,
-  },
-  title: { fontFamily: Fonts.display, textAlign: 'center' },
+  artTop: { position: 'absolute', top: 0, left: 0, right: 0 },
+  heroBottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  heroBody: { paddingHorizontal: 24, paddingBottom: 4, alignItems: 'center', gap: 6 },
+  title: { fontWeight: '800', textAlign: 'center' },
   centered: { textAlign: 'center' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   score: {

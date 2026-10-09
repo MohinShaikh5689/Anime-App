@@ -25,6 +25,7 @@ import { PlatformPressable } from '@/components/motion';
 import { Art } from '@/components/poster';
 import { PosterCard } from '@/components/poster-card';
 import { ContinueCard } from '@/components/continue-card';
+import { Fade } from '@/components/fade';
 import { EpisodeBar } from '@/components/progress';
 import { AnimeShelf, PosterRow, Shelf } from '@/components/shelf';
 import { useAnimeHref } from '@/components/tab-context';
@@ -50,7 +51,6 @@ import { readableOn, showAccent, withAlpha } from '@/lib/color';
 import { useRequest } from '@/lib/use-request';
 import { type LibraryEntry, useLibrary } from '@/store/library';
 import { useUi } from '@/store/ui';
-import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
 import { Type } from '@/theme/type';
 
@@ -61,8 +61,8 @@ type HeroItem = { anime: AnimeSummary; entry?: LibraryEntry };
 
 /** Big for short titles, stepping down so long ones stay readable in three lines. */
 function heroTitleSize(title: string) {
-  const fontSize = title.length > 40 ? 26 : title.length > 24 ? 30 : 36;
-  return { fontSize, lineHeight: Math.round(fontSize * 1.15) };
+  const fontSize = title.length > 40 ? 24 : title.length > 24 ? 28 : 34;
+  return { fontSize, lineHeight: Math.round(fontSize * 1.18) };
 }
 
 type Row = { feed: string; title: string; ranked?: boolean } | { mine: 'recs' | 'finished' };
@@ -364,28 +364,17 @@ function HeroSlide({
       <Animated.View style={[StyleSheet.absoluteFill, parallax]}>
         <Art uri={anime.coverUrl} color={anime.coverColor} style={StyleSheet.absoluteFill} contentPosition="top" />
       </Animated.View>
-      <View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            // Solid enough behind the text block that the title reads over any artwork.
-            experimental_backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 20%, ${withAlpha(canvas, 0)} 36%, ${withAlpha(canvas, 0.72)} 54%, ${withAlpha(canvas, 0.93)} 68%, ${canvas} 100%)`,
-          },
-        ]}
-      />
-      <View style={styles.heroBody}>
+      {/* Keeps the status bar legible over bright art. */}
+      <Fade color="#000000" height={140} max={0.45} flip style={styles.heroTop} />
+      {/* Text sits on solid page colour, so it reads over any artwork. */}
+      <View style={styles.heroBottom}>
+        <Fade color={canvas} height={120} />
+        <View style={[styles.heroBody, { backgroundColor: canvas }]}>
         <View style={[styles.heroKicker, { backgroundColor: accent }]}>
           <Text style={[styles.heroKickerLabel, { color: onAccent }]}>{kicker.toUpperCase()}</Text>
         </View>
         <Link href={href(anime.id)} asChild>
-          <Text
-            style={[
-              styles.heroTitle,
-              heroTitleSize(anime.title),
-              { color: colors.text, textShadowColor: withAlpha(canvas, 0.9) },
-            ]}
-            numberOfLines={3}
+          <Text style={[styles.heroTitle, heroTitleSize(anime.title), { color: colors.text }]} numberOfLines={3}
             accessibilityRole="link">
             {anime.title}
           </Text>
@@ -432,6 +421,7 @@ function HeroSlide({
             </PlatformPressable>
           </Link>
         </View>
+        </View>
       </View>
     </View>
   );
@@ -440,11 +430,14 @@ function HeroSlide({
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   glow: { position: 'absolute', left: 0, right: 0 },
-  heroBody: { position: 'absolute', left: 0, right: 0, bottom: 28, paddingHorizontal: 20, gap: 8 },
+  heroTop: { position: 'absolute', top: 0, left: 0, right: 0 },
+  heroBottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  heroBody: { paddingHorizontal: 20, paddingBottom: 28, gap: 8 },
   heroKicker: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   heroKickerLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.8 },
-  heroTitle: { fontFamily: Fonts.heading, textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 14 },
-  heroMeta: { fontWeight: '600', opacity: 0.85 },
+  // The system face at heavy weight: crisp at any size and in long titles.
+  heroTitle: { fontWeight: '800' },
+  heroMeta: { fontWeight: '600', opacity: 0.8 },
   heroProgress: { marginTop: 6, width: '70%' },
   heroActions: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
   primary: {

@@ -35,6 +35,9 @@ export default function TabStackLayout({ segment }: { segment: string }) {
             headerBlurEffect: undefined,
             headerStyle: { backgroundColor: 'transparent' },
             headerTintColor: '#FFFFFF',
+            // iOS 26 fades content under a transparent bar into the background (a black
+            // band behind the Dynamic Island); the cover art should run to the top edge.
+            scrollEdgeEffects: { top: 'hidden' },
           }}
         />
       </Stack>

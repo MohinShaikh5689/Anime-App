@@ -57,6 +57,14 @@ jobs:
           key: pods-${{ runner.os }}-${{ hashFiles('package-lock.json', 'app.json') }}
           restore-keys: pods-${{ runner.os }}-
 
+      # Every build gets a higher build number. iOS caches app icons (including the one
+      # shown in notifications) per build, so reinstalling the same "build 1" kept the old icon.
+      - name: Set build number
+        run: |
+          PLIST=$(ls ios/*/Info.plist | grep -v '^ios/Pods/' | head -n1)
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" "$PLIST"
+          echo "Build number ${{ github.run_number }} -> $PLIST"
+
       - name: Install pods
         working-directory: ios
         run: pod install

@@ -153,7 +153,9 @@ export function syncWidget(force = false) {
     const key = JSON.stringify(items);
     if (!force && key === lastKey) return;
 
-    const props: UpNextProps = { items };
+    // The timeline is stored in UserDefaults, which can't hold null (NSNull): leave those
+    // keys out instead. The layout treats a missing value like null.
+    const props = JSON.parse(JSON.stringify({ items }, (_, v) => (v === null ? undefined : v))) as UpNextProps;
     const now = Date.now();
     const horizon = now + TIMELINE_DAYS * 86_400_000;
     // One entry now and one at each air time, so the widget re-renders as episodes come out.

@@ -65,6 +65,15 @@ function RootStack() {
           }}
         />
         <Stack.Screen
+          name="username"
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: [0.5, 1],
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 28,
+          }}
+        />
+        <Stack.Screen
           name="avatar"
           options={{
             presentation: 'formSheet',

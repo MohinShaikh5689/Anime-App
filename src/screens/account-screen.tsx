@@ -99,8 +99,9 @@ export function AccountScreen() {
 
   const accent = showAccent(stats.top?.coverColor ?? stats.covers[0]?.coverColor, colors.primary);
   const onAccent = readableOn(accent);
-  const email = user?.email ?? '';
-  const name = email.split('@')[0];
+  const username = useProfile((s) => s.username);
+  // The email stays private; it only seeds the initial until a username is chosen.
+  const name = username ?? (user?.email ?? '').split('@')[0];
 
   const confirmSignOut = () =>
     Alert.alert('Sign out?', 'Your lists stay saved in your account.', [
@@ -174,12 +175,24 @@ export function AccountScreen() {
             </View>
           </Pressable>
         </Link>
-        <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
-          {name}
-        </Text>
-        <Text style={[Type.subhead, { color: colors.textSecondary }]} selectable numberOfLines={1}>
-          {email}
-        </Text>
+        <Link href="/username" asChild>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={username ? `@${username}, change username` : 'Choose a username'}
+            hitSlop={8}
+            style={({ pressed }) => [styles.nameRow, pressed && { opacity: 0.6 }]}>
+            {username ? (
+              <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
+                @{username}
+              </Text>
+            ) : (
+              <Text style={[styles.name, { color: accent }]} numberOfLines={1}>
+                Choose a username
+              </Text>
+            )}
+            <Icon sf="pencil" md="edit" size={16} color={colors.textSecondary as string} />
+          </Pressable>
+        </Link>
         {user?.created_at ? (
           <View style={[styles.since, { backgroundColor: withAlpha(accent, 0.16) }]}>
             <Text style={[Type.footnote, styles.sinceText, { color: colors.text }]}>
@@ -532,7 +545,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  name: { fontFamily: Fonts.display, fontSize: 28, lineHeight: 34 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, maxWidth: '100%' },
+  name: { fontFamily: Fonts.display, fontSize: 28, lineHeight: 34, flexShrink: 1 },
   since: { marginTop: 8, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12 },
   sinceText: { fontWeight: '600' },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16, marginTop: 28 },

@@ -33,7 +33,13 @@ import {
 import { readableOn, showAccent, withAlpha } from '@/lib/color';
 import { supabase, useAuth } from '@/lib/supabase';
 import { syncLibrary, useSyncStatus } from '@/lib/sync';
-import { syncWidget, useWidgetStatus, widgetsSupported } from '@/lib/widget-sync';
+import {
+  syncWidget,
+  useWidgetStatus,
+  widgetAppGroup,
+  widgetContainerReachable,
+  widgetsSupported,
+} from '@/lib/widget-sync';
 import { chapterAlertsSupported, syncChapterTask } from '@/lib/chapter-alerts';
 import { type LibraryEntry, useLibrary } from '@/store/library';
 import { useProfile } from '@/store/profile';
@@ -328,7 +334,7 @@ function WidgetRow({ accent }: { accent: string }) {
   const { colors } = useAppTheme();
   const { at, shows, covers, error } = useWidgetStatus();
   const [busy, setBusy] = useState(false);
-  const detail =
+  const status =
     at == null
       ? 'Not updated yet'
       : error
@@ -336,6 +342,9 @@ function WidgetRow({ accent }: { accent: string }) {
         : shows === 0
           ? 'Nothing up next in Watching'
           : `${shows} show${shows === 1 ? '' : 's'}, ${covers} cover${covers === 1 ? '' : 's'} · ${new Date(at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+  // Where the app writes; the widget has to read the same group.
+  const group = `${widgetAppGroup ?? 'No app group'}${widgetContainerReachable ? '' : ' (not reachable)'}`;
+  const detail = `${status}\n${group}`;
   return (
     <Row
       sf="square.grid.2x2.fill"

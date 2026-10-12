@@ -128,34 +128,84 @@ index da0010a..421aca1 100644
      guard let groupIdentifier else {
        fatalError("Could not get the app group identifier from Info.plist")
      }
+diff --git a/node_modules/expo-widgets/ios/WidgetsModule.swift b/node_modules/expo-widgets/ios/WidgetsModule.swift
+index b1b4295..c488b97 100644
+--- a/node_modules/expo-widgets/ios/WidgetsModule.swift
++++ b/node_modules/expo-widgets/ios/WidgetsModule.swift
+@@ -45,6 +45,10 @@ public final class WidgetsModule: Module {
+       pushToStartTokenObserverTask = nil
+     }
+ 
++    Constant("appGroupIdentifier") { () -> String? in
++      WidgetsStorage.appGroupIdentifier
++    }
++
+     Constant("widgetsDirectory") { () -> String? in
+       guard let appGroupIdentifier = WidgetsStorage.appGroupIdentifier,
+             let containerUrl = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) else {
 diff --git a/node_modules/expo-widgets/ios/WidgetsStorage.swift b/node_modules/expo-widgets/ios/WidgetsStorage.swift
-index 86f9d6c..1e1c2c2 100644
+index 86f9d6c..6617df6 100644
 --- a/node_modules/expo-widgets/ios/WidgetsStorage.swift
 +++ b/node_modules/expo-widgets/ios/WidgetsStorage.swift
-@@ -1,5 +1,25 @@
+@@ -1,5 +1,60 @@
  public enum WidgetsStorage {
 -  public static var appGroupIdentifier: String? = Bundle.main.object(forInfoDictionaryKey: "ExpoWidgetsAppGroupIdentifier") as? String
 +  public static var appGroupIdentifier: String? = resolveAppGroupIdentifier()
 +
-+  /// The configured app group, or the one a sideloading tool registered in its place.
-+  /// AltStore and SideStore re-register app groups under new identifiers when they sign
-+  /// with a free account and list the real ones in `ALTAppGroups`, but leave
-+  /// `ExpoWidgetsAppGroupIdentifier` as built, so app and widget would miss each other.
++  /// The app group this build can actually use.
++  ///
++  /// AltStore and SideStore re-sign with a free account under new app group identifiers
++  /// (usually the original plus a team suffix) but leave `ExpoWidgetsAppGroupIdentifier` as
++  /// built, so app and widget would each open a container the other never sees. The groups
++  /// the build is entitled to are listed in its embedded provisioning profile, so prefer those,
++  /// then `ALTAppGroups`, then the configured identifier.
 +  public static func resolveAppGroupIdentifier() -> String? {
 +    let configured = Bundle.main.object(forInfoDictionaryKey: "ExpoWidgetsAppGroupIdentifier") as? String
-+    // A widget extension lives at App.app/PlugIns/Widget.appex; also check the app's Info.plist.
++    // A widget extension lives at App.app/PlugIns/Widget.appex; also check the containing app.
 +    let appBundle = Bundle(url: Bundle.main.bundleURL.deletingLastPathComponent().deletingLastPathComponent())
++
++    if let groups = provisionedAppGroups(in: Bundle.main.bundleURL), let pick = pickAppGroup(groups, configured: configured) {
++      return pick
++    }
 +    let altGroups =
 +      (Bundle.main.object(forInfoDictionaryKey: "ALTAppGroups") as? [String])
 +      ?? (appBundle?.object(forInfoDictionaryKey: "ALTAppGroups") as? [String])
-+    if let altGroups, !altGroups.isEmpty {
-+      if let configured, let match = altGroups.first(where: { $0.hasPrefix(configured) }) {
-+        return match
-+      }
-+      return altGroups.first
++    if let altGroups, let pick = pickAppGroup(altGroups, configured: configured) {
++      return pick
 +    }
 +    return configured
 +  }
++
++  static func pickAppGroup(_ groups: [String], configured: String?) -> String? {
++    if let configured {
++      if groups.contains(configured) {
++        return configured
++      }
++      if let match = groups.first(where: { $0.hasPrefix(configured) }) {
++        return match
++      }
++    }
++    return groups.first
++  }
++
++  /// `com.apple.security.application-groups` from the bundle's embedded.mobileprovision.
++  static func provisionedAppGroups(in bundleURL: URL) -> [String]? {
++    let url = bundleURL.appendingPathComponent("embedded.mobileprovision")
++    // The profile is a signed CMS envelope with the plist stored as plain XML inside.
++    guard let data = try? Data(contentsOf: url),
++          let start = data.range(of: Data("<?xml".utf8)),
++          let end = data.range(of: Data("</plist>".utf8), in: start.lowerBound..<data.endIndex),
++          let plist = try? PropertyListSerialization.propertyList(
++            from: data.subdata(in: start.lowerBound..<end.upperBound), options: [], format: nil
++          ) as? [String: Any],
++          let entitlements = plist["Entitlements"] as? [String: Any],
++          let groups = entitlements["com.apple.security.application-groups"] as? [String],
++          !groups.isEmpty else {
++      return nil
++    }
++    return groups
++  }
++
    static let defaults = UserDefaults(suiteName: appGroupIdentifier)
  
    static func set(_ value: [String: Any], forKey key: String) {

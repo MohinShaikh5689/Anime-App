@@ -28,6 +28,12 @@ const Widgets: WidgetsModule | null =
       (require('expo-widgets') as WidgetsModule)
     : null;
 
+/** The app group the native side resolved (it can differ from app.json after sideloading). */
+const nativeWidgets = Widgets ? (requireOptionalNativeModule('ExpoWidgets') as { appGroupIdentifier?: string | null }) : null;
+export const widgetAppGroup = nativeWidgets?.appGroupIdentifier ?? null;
+/** Whether the app can open the folder it shares with the widget. */
+export const widgetContainerReachable = !!Widgets?.widgetsDirectory;
+
 const upNext = Widgets?.createWidget<UpNextProps>('UpNext', UpNextLayout) ?? null;
 
 const MAX_ITEMS = 8;

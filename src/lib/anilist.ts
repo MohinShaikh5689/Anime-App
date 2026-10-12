@@ -451,6 +451,34 @@ export async function getAnime(id: number, signal?: AbortSignal): Promise<AnimeD
   };
 }
 
+export type AvatarGender = 'Male' | 'Female' | 'Any';
+export type AvatarCharacter = { id: number; name: string; image: string; gender: string | null };
+
+/**
+ * Character portraits to use as a profile picture: AniList's most-favourited
+ * characters (or a search), filtered by gender. Each one is a stable CDN URL.
+ */
+export async function getAvatarCharacters(
+  { gender, page = 1, search }: { gender: AvatarGender; page?: number; search?: string },
+  signal?: AbortSignal
+): Promise<AvatarCharacter[]> {
+  const data = await request<{
+    Page: { characters: { id: number; name: { full: string | null }; gender: string | null; image: { large: string | null } | null }[] };
+  }>(
+    `query ($page: Int, $search: String, $sort: [CharacterSort]) {
+      Page(page: $page, perPage: 50) {
+        characters(search: $search, sort: $sort) { id name { full } gender image { large } }
+      }
+    }`,
+    { page, search: search || undefined, sort: search ? ['SEARCH_MATCH'] : ['FAVOURITES_DESC'] },
+    signal
+  );
+  return data.Page.characters
+    .filter((c) => c.image?.large && !c.image.large.includes('/default.'))
+    .filter((c) => gender === 'Any' || c.gender === gender)
+    .map((c) => ({ id: c.id, name: c.name.full ?? 'Unknown', image: c.image!.large!, gender: c.gender }));
+}
+
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export async function getCharacter(id: number, signal?: AbortSignal): Promise<CharacterDetails> {

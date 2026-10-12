@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { Link } from 'expo-router';
 import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -16,6 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Avatar } from '@/components/avatar';
 import { Fade } from '@/components/fade';
 import { Icon } from '@/components/icon';
 import { Art, Poster } from '@/components/poster';
@@ -33,6 +35,7 @@ import { supabase, useAuth } from '@/lib/supabase';
 import { syncLibrary, useSyncStatus } from '@/lib/sync';
 import { chapterAlertsSupported, syncChapterTask } from '@/lib/chapter-alerts';
 import { type LibraryEntry, useLibrary } from '@/store/library';
+import { useProfile } from '@/store/profile';
 import { useSettings } from '@/store/settings';
 import { Fonts } from '@/theme/fonts';
 import { useAppTheme } from '@/theme/theme';
@@ -48,6 +51,7 @@ async function signOut() {
   await syncLibrary();
   await supabase.auth.signOut();
   useLibrary.getState().reset();
+  useProfile.getState().reset();
 }
 
 /** Your best-rated (then most recent) titles, for the banner and top pick. */
@@ -62,6 +66,7 @@ export function AccountScreen() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const user = useAuth((s) => s.session?.user);
+  const avatarUrl = useProfile((s) => s.avatarUrl);
   const entries = useLibrary((s) => s.entries);
   const pending = useLibrary((s) => Object.keys(s.dirty).length + Object.keys(s.removed).length);
   const { syncing, error, lastSyncAt } = useSyncStatus();
@@ -126,6 +131,7 @@ export function AccountScreen() {
           }
           await supabase.auth.signOut({ scope: 'local' });
           useLibrary.getState().reset();
+          useProfile.getState().reset();
         },
       },
     ]);
@@ -160,9 +166,14 @@ export function AccountScreen() {
       </View>
 
       <View style={styles.profile}>
-        <View style={[styles.avatar, { backgroundColor: accent, borderColor: canvas }]}>
-          <Text style={[styles.avatarText, { color: onAccent }]}>{(name || '?').charAt(0).toUpperCase()}</Text>
-        </View>
+        <Link href="/avatar" asChild>
+          <Pressable accessibilityRole="button" accessibilityLabel="Change profile picture" style={styles.avatarButton}>
+            <Avatar url={avatarUrl} name={name} size={96} accent={accent} ring={canvas} />
+            <View style={[styles.avatarEdit, { backgroundColor: accent, borderColor: canvas }]}>
+              <Icon sf="pencil" md="edit" size={14} color={onAccent} />
+            </View>
+          </Pressable>
+        </Link>
         <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
           {name}
         </Text>
@@ -509,16 +520,18 @@ const styles = StyleSheet.create({
   bannerTop: { position: 'absolute', top: 0, left: 0, right: 0 },
   bannerBottom: { position: 'absolute', bottom: 0, left: 0, right: 0 },
   profile: { alignItems: 'center', gap: 4, marginTop: -56, paddingHorizontal: 24 },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 4,
+  avatarButton: { marginBottom: 8 },
+  avatarEdit: {
+    position: 'absolute',
+    right: 0,
+    bottom: 2,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 3,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
   },
-  avatarText: { fontFamily: Fonts.display, fontSize: 42, lineHeight: 50 },
   name: { fontFamily: Fonts.display, fontSize: 28, lineHeight: 34 },
   since: { marginTop: 8, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12 },
   sinceText: { fontWeight: '600' },

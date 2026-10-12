@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { View } from 'react-native';
 
 import AppTabs from '@/components/app-tabs';
@@ -6,6 +7,7 @@ import { useAiringRefresh } from '@/lib/airing-refresh';
 import { useEpisodeAlerts } from '@/lib/episode-alerts';
 import { useAuth } from '@/lib/supabase';
 import { useLibrarySync } from '@/lib/sync';
+import { useProfile } from '@/store/profile';
 
 /** Signed-in area: the tab bar, with the library kept in sync with Supabase. */
 export default function AppLayout() {
@@ -15,6 +17,9 @@ export default function AppLayout() {
 
 function SyncedTabs({ userId }: { userId: string }) {
   useLibrarySync(userId);
+  useEffect(() => {
+    useProfile.getState().load(userId);
+  }, [userId]);
   useAiringRefresh();
   useEpisodeAlerts();
   useFinishCelebrations();

@@ -20,6 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Avatar } from '@/components/avatar';
 import { Icon } from '@/components/icon';
 import { PlatformPressable } from '@/components/motion';
 import { Art } from '@/components/poster';
@@ -50,6 +51,7 @@ import { isComplete, isUnaired, maxProgress, nextEpisodeLabel, premiereLabel } f
 import { readableOn, showAccent, withAlpha } from '@/lib/color';
 import { useRequest } from '@/lib/use-request';
 import { type LibraryEntry, useLibrary } from '@/store/library';
+import { useProfile } from '@/store/profile';
 import { useUi } from '@/store/ui';
 import { useAppTheme } from '@/theme/theme';
 import { Type } from '@/theme/type';
@@ -111,6 +113,7 @@ export function HomeScreen({ medium = 'anime' }: { medium?: Medium }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const entries = useLibrary((s) => s.entries);
+  const avatarUrl = useProfile((s) => s.avatarUrl);
   const heroHeight = Math.min(Math.round(height * 0.7), 640);
 
   const fetchFeed = useCallback((signal: AbortSignal) => getFeed(medium, signal), [medium]);
@@ -293,7 +296,11 @@ export function HomeScreen({ medium = 'anime' }: { medium?: Medium }) {
       <View style={[styles.account, { top: insets.top + 8 }]}>
         <Link href="/account" asChild>
           <PlatformPressable haptic accessibilityRole="button" accessibilityLabel="Account" style={styles.accountButton}>
-            <Icon sf="person.crop.circle.fill" md="account_circle" size={28} color="#FFFFFF" />
+            {avatarUrl ? (
+              <Avatar url={avatarUrl} name="" size={40} accent={glow} ring="rgba(255,255,255,0.85)" />
+            ) : (
+              <Icon sf="person.crop.circle.fill" md="account_circle" size={28} color="#FFFFFF" />
+            )}
           </PlatformPressable>
         </Link>
       </View>

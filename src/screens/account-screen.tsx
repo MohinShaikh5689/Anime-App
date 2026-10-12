@@ -179,7 +179,8 @@ export function AccountScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={username ? `@${username}, change username` : 'Choose a username'}
-            hitSlop={8}
+            // The edit badge sits just outside the name's right edge.
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 44 }}
             style={({ pressed }) => [styles.nameRow, pressed && { opacity: 0.6 }]}>
             {username ? (
               <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
@@ -190,7 +191,10 @@ export function AccountScreen() {
                 Choose a username
               </Text>
             )}
-            <Icon sf="pencil" md="edit" size={16} color={colors.textSecondary as string} />
+            {/* Absolutely placed so the name itself stays centred under the avatar. */}
+            <View style={[styles.nameEdit, { backgroundColor: colors.fill }]}>
+              <Icon sf="pencil" md="edit" size={12} color={colors.textSecondary as string} />
+            </View>
           </Pressable>
         </Link>
         {user?.created_at ? (
@@ -545,8 +549,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, maxWidth: '100%' },
-  name: { fontFamily: Fonts.display, fontSize: 28, lineHeight: 34, flexShrink: 1 },
+  // Narrower than the page so the edit badge beside the name never clips.
+  nameRow: { maxWidth: '80%' },
+  name: { fontFamily: Fonts.display, fontSize: 28, lineHeight: 34, textAlign: 'center' },
+  nameEdit: {
+    position: 'absolute',
+    left: '100%',
+    marginLeft: 8,
+    // Centred on the 34pt line box, nudged down to the lowercase letters' middle.
+    top: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   since: { marginTop: 8, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12 },
   sinceText: { fontWeight: '600' },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16, marginTop: 28 },

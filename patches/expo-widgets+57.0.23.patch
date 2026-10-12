@@ -1,3 +1,109 @@
+diff --git a/node_modules/expo-widgets/ios/Widgets/EntryView.swift b/node_modules/expo-widgets/ios/Widgets/EntryView.swift
+index 946b66d..cfbb737 100644
+--- a/node_modules/expo-widgets/ios/Widgets/EntryView.swift
++++ b/node_modules/expo-widgets/ios/Widgets/EntryView.swift
+@@ -27,10 +27,100 @@ public struct WidgetsEntryView: View {
+   public var body: some View {
+     if let layout = WidgetsStorage.getString(forKey: "__expo_widgets_\(entry.name)_layout"),
+        !layout.isEmpty {
+-      let node = evaluateLayout(layout: layout, props: entry.props ?? [:], environment: widgetEnvironment)
++      let rendered = evaluateLayout(layout: layout, props: entry.props ?? [:], environment: widgetEnvironment)
++      let (node, background) = extractContainerBackground(rendered)
+       WidgetsDynamicView(name: entry.name, kind: .widget, node: node, entryIndex: entry.entryIndex, environmentString: widgetEnvironmentString)
++        .modifier(WidgetContainerBackground(style: background))
+     } else {
+       WidgetsDynamicView(name: entry.name, kind: .widget, node: createRedBox(message: "No layout found for \(WidgetsStorage.appGroupIdentifier ?? "")::\(entry.name)"), entryIndex: entry.entryIndex, environmentString: widgetEnvironmentString)
++        .modifier(WidgetContainerBackground(style: nil))
+     }
+   }
+ }
++
++
++// MARK: - Container background
++//
++// The root's `containerBackground` modifier from @expo/ui did not reach WidgetKit, so iOS 17+
++// showed "Please adopt containerBackground API". Apply it here, natively, on the root view.
++
++private struct WidgetContainerBackground: ViewModifier {
++  let style: AnyShapeStyle?
++
++  func body(content: Content) -> some View {
++    if #available(iOS 17.0, *) {
++      content.containerBackground(style ?? AnyShapeStyle(Color.clear), for: .widget)
++    } else {
++      content
++    }
++  }
++}
++
++/// Removes the root node's `containerBackground` modifier and returns its style.
++private func extractContainerBackground(_ node: [String: Any]) -> ([String: Any], AnyShapeStyle?) {
++  guard var props = node["props"] as? [String: Any],
++        var modifiers = props["modifiers"] as? [[String: Any]],
++        let index = modifiers.firstIndex(where: { $0["$type"] as? String == "containerBackground" }) else {
++    return (node, nil)
++  }
++  let style = widgetShapeStyle(modifiers[index]["style"])
++  modifiers.remove(at: index)
++  props["modifiers"] = modifiers
++  var result = node
++  result["props"] = props
++  return (result, style)
++}
++
++private func widgetShapeStyle(_ value: Any?) -> AnyShapeStyle? {
++  if let hex = value as? String {
++    return widgetColor(hex).map { AnyShapeStyle($0) }
++  }
++  guard let style = value as? [String: Any] else {
++    return nil
++  }
++  switch style["type"] as? String {
++  case "color":
++    return (style["color"] as? String).flatMap(widgetColor).map { AnyShapeStyle($0) }
++  case "linearGradient":
++    let colors = (style["colors"] as? [Any] ?? []).compactMap { ($0 as? String).flatMap(widgetColor) }
++    guard !colors.isEmpty else {
++      return nil
++    }
++    return AnyShapeStyle(LinearGradient(
++      colors: colors,
++      startPoint: widgetUnitPoint(style["startPoint"]) ?? .top,
++      endPoint: widgetUnitPoint(style["endPoint"]) ?? .bottom
++    ))
++  default:
++    return nil
++  }
++}
++
++private func widgetUnitPoint(_ value: Any?) -> UnitPoint? {
++  guard let point = value as? [String: Any],
++        let x = (point["x"] as? NSNumber)?.doubleValue,
++        let y = (point["y"] as? NSNumber)?.doubleValue else {
++    return nil
++  }
++  return UnitPoint(x: x, y: y)
++}
++
++/// `#RRGGBB` or `#RRGGBBAA`.
++private func widgetColor(_ string: String) -> Color? {
++  var hex = string.trimmingCharacters(in: .whitespaces)
++  guard hex.hasPrefix("#") else {
++    return nil
++  }
++  hex.removeFirst()
++  guard hex.count == 6 || hex.count == 8, let value = UInt64(hex, radix: 16) else {
++    return nil
++  }
++  let rgba = hex.count == 6 ? (value << 8) | 0xFF : value
++  return Color(
++    .sRGB,
++    red: Double((rgba >> 24) & 0xFF) / 255,
++    green: Double((rgba >> 16) & 0xFF) / 255,
++    blue: Double((rgba >> 8) & 0xFF) / 255,
++    opacity: Double(rgba & 0xFF) / 255
++  )
++}
 diff --git a/node_modules/expo-widgets/ios/Widgets/TimelineProvider.swift b/node_modules/expo-widgets/ios/Widgets/TimelineProvider.swift
 index da0010a..421aca1 100644
 --- a/node_modules/expo-widgets/ios/Widgets/TimelineProvider.swift

@@ -1,6 +1,6 @@
 import { type Href, router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import {
   ActionSheetIOS,
   Alert,
@@ -84,6 +84,29 @@ function showQuickActions(entry: LibraryEntry) {
   }
 }
 
+const LibraryContinueCard = memo(function LibraryContinueCard({ entry, width }: { entry: LibraryEntry; width: number }) {
+  const onLongPress = useCallback(() => showQuickActions(entry), [entry]);
+  return <ContinueCard entry={entry} width={width} onLongPress={onLongPress} />;
+});
+
+const LibraryPosterCard = memo(function LibraryPosterCard({ entry, width }: { entry: LibraryEntry; width: number }) {
+  const onLongPress = useCallback(() => showQuickActions(entry), [entry]);
+  const frames = useMemo(
+    () => (entry.status === 'dropped' ? { progress: entry.progress, total: entry.episodes } : undefined),
+    [entry]
+  );
+  return (
+    <PosterCard
+      anime={entry}
+      width={width}
+      showMark={false}
+      subtitle={subtitleFor(entry)}
+      frames={frames}
+      onLongPress={onLongPress}
+    />
+  );
+});
+
 export function LibraryScreen() {
   const { colors, canvas } = useAppTheme();
   const insets = useSafeAreaInsets();
@@ -122,6 +145,20 @@ export function LibraryScreen() {
   const cardsPerRow = width >= 700 ? 2 : 1;
   const continueWidth = Math.floor((width - GRID_PADDING * 2 - GRID_GAP * (cardsPerRow - 1)) / cardsPerRow);
   const numColumns = listMode ? cardsPerRow : columns;
+
+  // Stable, so a change to one entry re-renders only that card (cards are memoized and
+  // entries keep their identity until they change).
+  const renderItem = useCallback(
+    ({ item }: { item: LibraryEntry }) =>
+      listMode ? (
+        <View style={numColumns === 1 ? styles.single : undefined}>
+          <LibraryContinueCard entry={item} width={continueWidth} />
+        </View>
+      ) : (
+        <LibraryPosterCard entry={item} width={cardWidth} />
+      ),
+    [listMode, numColumns, continueWidth, cardWidth]
+  );
 
   const header = (
     <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
@@ -204,23 +241,15 @@ export function LibraryScreen() {
         columnWrapperStyle={numColumns > 1 ? styles.columns : undefined}
         data={items}
         keyExtractor={(item) => String(item.id)}
-        renderItem={({ item }) =>
-          listMode ? (
-            <View style={numColumns === 1 ? styles.single : undefined}>
-              <ContinueCard entry={item} width={continueWidth} onLongPress={() => showQuickActions(item)} />
-            </View>
-          ) : (
-            <PosterCard
-              anime={item}
-              width={cardWidth}
-              showMark={false}
-              subtitle={subtitleFor(item)}
-              frames={item.status === 'dropped' ? { progress: item.progress, total: item.episodes } : undefined}
-              onLongPress={() => showQuickActions(item)}
-            />
-          )
-        }
+        renderItem={renderItem}
         ListHeaderComponent={header}
+        // Only a few screens of cards are mounted, added in small batches; covers load
+        // as their rows appear (expo-image).
+        initialNumToRender={numColumns * 5}
+        maxToRenderPerBatch={numColumns * 4}
+        updateCellsBatchingPeriod={40}
+        windowSize={9}
+        removeClippedSubviews={Platform.OS === 'android'}
         ListEmptyComponent={
           hydrated ? (
             <EmptyState

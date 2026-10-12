@@ -7,6 +7,7 @@ import { useAiringRefresh } from '@/lib/airing-refresh';
 import { useEpisodeAlerts } from '@/lib/episode-alerts';
 import { useAuth } from '@/lib/supabase';
 import { useLibrarySync } from '@/lib/sync';
+import { useWidgetSync } from '@/lib/widget-sync';
 import { useProfile } from '@/store/profile';
 
 /** Signed-in area: the tab bar, with the library kept in sync with Supabase. */
@@ -22,6 +23,7 @@ function SyncedTabs({ userId }: { userId: string }) {
   }, [userId]);
   useAiringRefresh();
   useEpisodeAlerts();
+  useWidgetSync();
   useFinishCelebrations();
   return (
     <View style={{ flex: 1 }}>

@@ -1,0 +1,55 @@
+diff --git a/node_modules/expo-widgets/ios/Widgets/TimelineProvider.swift b/node_modules/expo-widgets/ios/Widgets/TimelineProvider.swift
+index da0010a..421aca1 100644
+--- a/node_modules/expo-widgets/ios/Widgets/TimelineProvider.swift
++++ b/node_modules/expo-widgets/ios/Widgets/TimelineProvider.swift
+@@ -8,8 +8,7 @@ public struct WidgetsTimelineProvider: TimelineProvider {
+   public func getSnapshot(
+     in context: Context, completion: @escaping @Sendable (WidgetsTimelineEntry) -> Void
+   ) {
+-    let groupIdentifier =
+-      Bundle.main.object(forInfoDictionaryKey: "ExpoWidgetsAppGroupIdentifier") as? String
++    let groupIdentifier = WidgetsStorage.appGroupIdentifier
+     guard let groupIdentifier else {
+       completion(WidgetsTimelineEntry(date: Date(), name: name, props: nil, entryIndex: nil))
+       return
+@@ -23,8 +22,7 @@ public struct WidgetsTimelineProvider: TimelineProvider {
+     in context: Context,
+     completion: @escaping @Sendable (Timeline<WidgetsTimelineEntry>) -> Void
+   ) {
+-    let groupIdentifier =
+-      Bundle.main.object(forInfoDictionaryKey: "ExpoWidgetsAppGroupIdentifier") as? String
++    let groupIdentifier = WidgetsStorage.appGroupIdentifier
+     guard let groupIdentifier else {
+       fatalError("Could not get the app group identifier from Info.plist")
+     }
+diff --git a/node_modules/expo-widgets/ios/WidgetsStorage.swift b/node_modules/expo-widgets/ios/WidgetsStorage.swift
+index 86f9d6c..1e1c2c2 100644
+--- a/node_modules/expo-widgets/ios/WidgetsStorage.swift
++++ b/node_modules/expo-widgets/ios/WidgetsStorage.swift
+@@ -1,5 +1,25 @@
+ public enum WidgetsStorage {
+-  public static var appGroupIdentifier: String? = Bundle.main.object(forInfoDictionaryKey: "ExpoWidgetsAppGroupIdentifier") as? String
++  public static var appGroupIdentifier: String? = resolveAppGroupIdentifier()
++
++  /// The configured app group, or the one a sideloading tool registered in its place.
++  /// AltStore and SideStore re-register app groups under new identifiers when they sign
++  /// with a free account and list the real ones in `ALTAppGroups`, but leave
++  /// `ExpoWidgetsAppGroupIdentifier` as built, so app and widget would miss each other.
++  public static func resolveAppGroupIdentifier() -> String? {
++    let configured = Bundle.main.object(forInfoDictionaryKey: "ExpoWidgetsAppGroupIdentifier") as? String
++    // A widget extension lives at App.app/PlugIns/Widget.appex; also check the app's Info.plist.
++    let appBundle = Bundle(url: Bundle.main.bundleURL.deletingLastPathComponent().deletingLastPathComponent())
++    let altGroups =
++      (Bundle.main.object(forInfoDictionaryKey: "ALTAppGroups") as? [String])
++      ?? (appBundle?.object(forInfoDictionaryKey: "ALTAppGroups") as? [String])
++    if let altGroups, !altGroups.isEmpty {
++      if let configured, let match = altGroups.first(where: { $0.hasPrefix(configured) }) {
++        return match
++      }
++      return altGroups.first
++    }
++    return configured
++  }
+   static let defaults = UserDefaults(suiteName: appGroupIdentifier)
+ 
+   static func set(_ value: [String: Any], forKey key: String) {

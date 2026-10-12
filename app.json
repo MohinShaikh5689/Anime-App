@@ -2,7 +2,7 @@
   "expo": {
     "name": "Tsuzuku",
     "slug": "anime-app",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "animetracker",
@@ -52,7 +52,28 @@
           "color": "#6C5CFF"
         }
       ],
-      "expo-background-task"
+      "expo-background-task",
+      [
+        "expo-widgets",
+        {
+          "widgets": [
+            {
+              "name": "UpNext",
+              "displayName": "Up Next",
+              "description": "Your next episodes and when they air.",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium",
+                  "systemLarge",
+                  "accessoryRectangular",
+                  "accessoryInline"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

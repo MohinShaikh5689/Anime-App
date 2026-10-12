@@ -106,6 +106,27 @@ jobs:
           APP=$(ls -d "$APP_DIR"/*.app | head -n1)
           mkdir -p dist
           if [ "$SDK" = "iphoneos" ]; then
+            # An unsigned build carries no entitlements, so SideStore re-signs without the
+            # app group and app and widget can't share data. Ad-hoc sign every bundle with
+            # its entitlements (inside out) so they travel with the binaries.
+            sign_nested() {
+              find "$1" -maxdepth 1 -name '*.dylib' -exec codesign --force --sign - {} \;
+              if [ -d "$1/Frameworks" ]; then
+                find "$1/Frameworks" -maxdepth 1 \( -name '*.framework' -o -name '*.dylib' \) -exec codesign --force --sign - {} \;
+              fi
+            }
+            for EXT in "$APP"/PlugIns/*.appex; do
+              [ -d "$EXT" ] || continue
+              NAME=$(basename "$EXT" .appex)
+              sign_nested "$EXT"
+              codesign --force --sign - --entitlements "ios/$NAME/$NAME.entitlements" "$EXT"
+            done
+            sign_nested "$APP"
+            codesign --force --sign - --entitlements "ios/$SCHEME/$SCHEME.entitlements" "$APP"
+            for BUNDLE in "$APP" "$APP"/PlugIns/*.appex; do
+              echo "Entitlements of $BUNDLE:"
+              codesign -d --entitlements - "$BUNDLE"
+            done
             mkdir -p Payload
             cp -R "$APP" Payload/
             zip -qry "dist/${SCHEME}-dev-unsigned.ipa" Payload

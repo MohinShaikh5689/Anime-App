@@ -19,6 +19,7 @@ import {
   padding,
   resizable,
   tint,
+  widgetAccentedRenderingMode,
   widgetURL,
 } from '@expo/ui/swift-ui/modifiers';
 import type { WidgetEnvironment } from 'expo-widgets';
@@ -52,7 +53,8 @@ export const UpNextLayout = (props: UpNextProps, environment: WidgetEnvironment)
   const link = (id: number) => 'animetracker://anime/' + id;
 
   // An episode counts as out once its air time has passed, even between app refreshes.
-  const items = props.items
+  // The gallery preview and placeholder render without props.
+  const items = (props.items ?? [])
     .map((it) => {
       const out = it.airingAt == null || it.airingAt <= now;
       return { ...it, out, ready: out ? Math.max(1, it.behind) : 0 };
@@ -85,7 +87,14 @@ export const UpNextLayout = (props: UpNextProps, environment: WidgetEnvironment)
     it.cover ? (
       <Image
         uiImage={it.cover}
-        modifiers={[resizable(), frame({ width, height: Math.round(width * 1.42) }), clipShape('roundedRectangle', radius)]}
+        modifiers={[
+          resizable(),
+          // In Tinted and Clear home screens an image is drawn as a flat tint-coloured
+          // block unless it opts out, which made covers solid white.
+          widgetAccentedRenderingMode('fullColor'),
+          frame({ width, height: Math.round(width * 1.42) }),
+          clipShape('roundedRectangle', radius),
+        ]}
       />
     ) : null;
 
@@ -164,7 +173,7 @@ export const UpNextLayout = (props: UpNextProps, environment: WidgetEnvironment)
   const rows = items.slice(0, family === 'systemMedium' ? 3 : 6);
   const head = rows[0];
   return (
-    <VStack alignment="leading" spacing={family === 'systemMedium' ? 6 : 10} modifiers={[background(head.color)]}>
+    <VStack alignment="leading" spacing={family === 'systemMedium' ? 6 : 10} modifiers={[background(head.color), widgetURL(home)]}>
       <HStack>
         <Text modifiers={[font({ size: 13, weight: 'heavy' }), foregroundStyle('#FFFFFF'), opacity(0.75)]}>UP NEXT</Text>
         <Spacer />

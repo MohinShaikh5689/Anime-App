@@ -33,6 +33,7 @@ import {
 import { readableOn, showAccent, withAlpha } from '@/lib/color';
 import { supabase, useAuth } from '@/lib/supabase';
 import { syncLibrary, useSyncStatus } from '@/lib/sync';
+import { syncWidget, useWidgetStatus, widgetsSupported } from '@/lib/widget-sync';
 import { chapterAlertsSupported, syncChapterTask } from '@/lib/chapter-alerts';
 import { type LibraryEntry, useLibrary } from '@/store/library';
 import { useProfile } from '@/store/profile';
@@ -278,6 +279,7 @@ export function AccountScreen() {
 
       <Section title="Account">
         <View style={[styles.card, styles.group, { backgroundColor: colors.surface }]}>
+          {widgetsSupported ? <WidgetRow accent={accent} /> : null}
           <Row
             sf={error ? 'exclamationmark.icloud.fill' : 'icloud.fill'}
             md={error ? 'cloud_off' : 'cloud_done'}
@@ -321,6 +323,37 @@ export function AccountScreen() {
 }
 
 /** On/off switch for new episode and chapter alerts, with what they cover. */
+/** Refreshes the Up Next widget and says what it last received. */
+function WidgetRow({ accent }: { accent: string }) {
+  const { colors } = useAppTheme();
+  const { at, shows, covers, error } = useWidgetStatus();
+  const [busy, setBusy] = useState(false);
+  const detail =
+    at == null
+      ? 'Not updated yet'
+      : error
+        ? `Widget update failed: ${error}`
+        : shows === 0
+          ? 'Nothing up next in Watching'
+          : `${shows} show${shows === 1 ? '' : 's'}, ${covers} cover${covers === 1 ? '' : 's'} · ${new Date(at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+  return (
+    <Row
+      sf="square.grid.2x2.fill"
+      md="widgets"
+      tint={error ? (colors.danger as string) : accent}
+      title="Refresh Widget"
+      detail={detail}
+      detailColor={error ? (colors.danger as string) : undefined}
+      busy={busy}
+      onPress={async () => {
+        setBusy(true);
+        await syncWidget(true);
+        setBusy(false);
+      }}
+    />
+  );
+}
+
 function EpisodeAlertsRow({ accent }: { accent: string }) {
   const { colors } = useAppTheme();
   const enabled = useSettings((s) => s.episodeAlerts);

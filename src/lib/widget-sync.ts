@@ -11,6 +11,7 @@ import { requireOptionalNativeModule } from 'expo';
 import { Directory, File } from 'expo-file-system';
 import { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
+import { create } from 'zustand';
 
 import { airedCount, isComplete } from '@/lib/airing';
 import { isManga } from '@/lib/anilist';
@@ -85,8 +86,10 @@ function smallCover(url: string) {
 /** Saves covers into the shared directory and removes ones no longer shown. */
 async function syncCovers(entries: Record<number, LibraryEntry>, ids: number[]) {
   const covers = new Map<number, string>();
-  if (!Widgets) return covers;
-  const dir = new Directory(Widgets.widgetsDirectory);
+  const path = Widgets?.widgetsDirectory;
+  // Null when the app can't reach the shared app group container.
+  if (!path) return covers;
+  const dir = new Directory(path);
   if (!dir.exists) dir.create({ intermediates: true, idempotent: true });
   const keep = new Set(ids.map((id) => `cover-${id}.jpg`));
 
@@ -116,6 +119,11 @@ async function syncCovers(entries: Record<number, LibraryEntry>, ids: number[]) 
   return covers;
 }
 
+type WidgetStatus = { at: number | null; shows: number; covers: number; error: string | null };
+
+/** The outcome of the last sync, shown on the Account screen. */
+export const useWidgetStatus = create<WidgetStatus>()(() => ({ at: null, shows: 0, covers: 0, error: null }));
+
 let lastKey = '';
 let running: Promise<void> | null = null;
 
@@ -126,12 +134,18 @@ export function syncWidget(force = false) {
   running = (async () => {
     const entries = useLibrary.getState().entries;
     const base = upNextItems(entries);
-    const covers = await syncCovers(entries, base.map((i) => i.id));
+    // Covers are a nice-to-have: a failure here must never keep the timeline from being written.
+    let covers = new Map<number, string>();
+    let coverError: string | null = null;
+    try {
+      covers = await syncCovers(entries, base.map((i) => i.id));
+    } catch (e) {
+      coverError = e instanceof Error ? e.message : String(e);
+    }
     const items: UpNextItem[] = base.map((i) => ({ ...i, cover: covers.get(i.id) ?? null }));
 
     const key = JSON.stringify(items);
     if (!force && key === lastKey) return;
-    lastKey = key;
 
     const props: UpNextProps = { items };
     const now = Date.now();
@@ -144,9 +158,17 @@ export function syncWidget(force = false) {
       .sort((a, b) => a - b)
       .slice(0, MAX_ENTRIES);
     upNext.updateTimeline(times.map((t) => ({ date: new Date(t), props })));
+    lastKey = key;
+    useWidgetStatus.setState({
+      at: Date.now(),
+      shows: items.length,
+      covers: covers.size,
+      error: coverError && `Covers: ${coverError}`,
+    });
   })()
-    .catch(() => {
+    .catch((e) => {
       // The widget keeps its previous timeline.
+      useWidgetStatus.setState({ at: Date.now(), error: e instanceof Error ? e.message : String(e) });
     })
     .finally(() => {
       running = null;

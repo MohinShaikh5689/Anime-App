@@ -43,6 +43,10 @@ function RootStack() {
   // Text laid out before Bricolage registers keeps the fallback font's (narrower)
   // measurements on iOS and gets truncated with "…", so nothing renders until fonts are in.
   if (!fontsReady) return null;
+  // A link that cold-starts the app (a widget or notification tap) is resolved against
+  // the first routes rendered. Before the saved session is restored every signed-in screen
+  // is still guarded off, so the link would land on "Unmatched route".
+  if (!ready) return null;
 
   // The splash screen stays up until we know whether someone is signed in.
   return (

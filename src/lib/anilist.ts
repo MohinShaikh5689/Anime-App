@@ -241,8 +241,13 @@ export const KIND_FILTER: Record<MediaKind, { type: MediaType; country: string |
   manhwa: { type: 'MANGA', country: 'KR' },
 };
 
-/** Search or browse AniList: free-text search, genre, season and sort combine freely. */
-export async function browseAnime(options: BrowseOptions, signal?: AbortSignal) {
+export type BrowsePage = { items: AnimeSummary[]; hasNextPage: boolean };
+
+/**
+ * One page of an AniList search or browse: free-text search, genre, season and sort combine
+ * freely. `page` starts at 1.
+ */
+export async function browsePage(options: BrowseOptions, page = 1, signal?: AbortSignal): Promise<BrowsePage> {
   const { search, genre, season, seasonYear, perPage = 30, kind = 'anime' } = options;
   const sort = options.sort ?? (search ? 'SEARCH_MATCH' : 'POPULARITY_DESC');
   const { type, country } = KIND_FILTER[kind];
@@ -250,16 +255,22 @@ export async function browseAnime(options: BrowseOptions, signal?: AbortSignal) 
   // argument is only included when a country is wanted.
   const countryArg = country ? ', countryOfOrigin: $country' : '';
   const countryVar = country ? ', $country: CountryCode' : '';
-  const data = await request<{ Page: { media: RawMedia[] } }>(
-    `query ($search: String, $genre: String, $season: MediaSeason, $seasonYear: Int, $sort: [MediaSort], $perPage: Int, $type: MediaType${countryVar}) {
-      Page(perPage: $perPage) {
+  const data = await request<{ Page: { pageInfo: { hasNextPage: boolean }; media: RawMedia[] } }>(
+    `query ($page: Int, $search: String, $genre: String, $season: MediaSeason, $seasonYear: Int, $sort: [MediaSort], $perPage: Int, $type: MediaType${countryVar}) {
+      Page(page: $page, perPage: $perPage) {
+        pageInfo { hasNextPage }
         media(search: $search, genre: $genre, season: $season, seasonYear: $seasonYear, sort: $sort, type: $type${countryArg}, isAdult: false) { ${SUMMARY_FIELDS} }
       }
     }`,
-    { search, genre, season, seasonYear, sort: [sort], perPage, type, ...(country ? { country } : {}) },
+    { page, search, genre, season, seasonYear, sort: [sort], perPage, type, ...(country ? { country } : {}) },
     signal
   );
-  return data.Page.media.map(toSummary);
+  return { items: data.Page.media.map(toSummary), hasNextPage: data.Page.pageInfo.hasNextPage };
+}
+
+/** The first page of a search or browse. */
+export async function browseAnime(options: BrowseOptions, signal?: AbortSignal) {
+  return (await browsePage(options, 1, signal)).items;
 }
 
 export function currentSeason(date = new Date()): { season: Season; seasonYear: number } {

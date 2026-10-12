@@ -6,65 +6,19 @@
  * app isn't opened for weeks. The schedule is rebuilt whenever the app opens, returns
  * to the foreground, or the Watching list changes, which also picks up delays.
  */
-import { requireOptionalNativeModule } from 'expo';
 import { type Href, router } from 'expo-router';
 import { useEffect } from 'react';
-import { AppState, Platform } from 'react-native';
+import { AppState } from 'react-native';
 
 import { getAiringSchedules, isManga } from '@/lib/anilist';
+import { checkNewChapters, syncChapterTask } from '@/lib/chapter-alerts';
+import { CHANNEL, ensureChannel, hasPermission, Notifications, requestAlertPermission } from '@/lib/notifications';
 import { useLibrary } from '@/store/library';
 import { useSettings } from '@/store/settings';
 
-type NotificationsModule = typeof import('expo-notifications');
-
-/**
- * expo-notifications needs its native module, which builds made before this feature
- * don't have. Load it only when present so those builds keep working without alerts.
- */
-const Notifications: NotificationsModule | null = (() => {
-  if (!requireOptionalNativeModule('ExpoNotificationScheduler')) return null;
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  return require('expo-notifications') as NotificationsModule;
-})();
-
-export const alertsSupported = Notifications != null;
-
-const CHANNEL = 'new-episodes';
+const REFRESH_INTERVAL = 30 * 60_000;
 /** iOS keeps at most 64 pending local notifications per app; leave a little room. */
 const MAX_SCHEDULED = 60;
-const REFRESH_INTERVAL = 30 * 60_000;
-
-Notifications?.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
-
-async function ensureChannel() {
-  if (Platform.OS !== 'android' || !Notifications) return;
-  await Notifications.setNotificationChannelAsync(CHANNEL, {
-    name: 'New episodes',
-    description: 'When a show you are watching gets a new episode',
-    importance: Notifications.AndroidImportance.HIGH,
-  });
-}
-
-async function hasPermission() {
-  if (!Notifications) return false;
-  const p = await Notifications.getPermissionsAsync();
-  return p.granted || p.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
-}
-
-/** Asks for notification permission. Returns whether alerts can be shown. */
-export async function requestAlertPermission() {
-  if (!Notifications) return false;
-  await ensureChannel();
-  const p = await Notifications.requestPermissionsAsync();
-  return p.granted || p.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
-}
 
 let running: Promise<void> | null = null;
 let lastRun = 0;
@@ -171,10 +125,10 @@ export async function sendTestAlert(delaySeconds = 5) {
   return true;
 }
 
-/** IDs of shows in Watching (anime only), as a stable string for change detection. */
+/** IDs of titles in Watching/Reading, as a stable string for change detection. */
 function watchingKey() {
   return Object.values(useLibrary.getState().entries)
-    .filter((e) => e.status === 'watching' && !isManga(e))
+    .filter((e) => e.status === 'watching')
     .map((e) => e.id)
     .sort((a, b) => a - b)
     .join(',');
@@ -205,9 +159,14 @@ export function useEpisodeAlerts() {
 
     maybeAsk();
     refreshEpisodeAlerts(true);
+    syncChapterTask();
+    checkNewChapters();
 
     const appState = AppState.addEventListener('change', (state) => {
-      if (state === 'active') refreshEpisodeAlerts();
+      if (state === 'active') {
+        refreshEpisodeAlerts();
+        checkNewChapters();
+      }
     });
 
     // Reschedule shortly after the Watching list changes.
@@ -222,6 +181,7 @@ export function useEpisodeAlerts() {
       timer = setTimeout(() => {
         maybeAsk();
         refreshEpisodeAlerts(true);
+        syncChapterTask();
       }, 2000);
     });
 
@@ -241,3 +201,5 @@ export function useEpisodeAlerts() {
     };
   }, []);
 }
+
+export { alertsSupported, requestAlertPermission } from '@/lib/notifications';

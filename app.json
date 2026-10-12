@@ -2,7 +2,7 @@
   "expo": {
     "name": "Tsuzuku",
     "slug": "anime-app",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "animetracker",
@@ -12,7 +12,7 @@
       "android"
     ],
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/tsuzuku.icon",
       "bundleIdentifier": "com.mohinshaikh.animetracker",
       "supportsTablet": true
     },
@@ -47,7 +47,8 @@
           "icon": "./assets/images/notification-icon.png",
           "color": "#6C5CFF"
         }
-      ]
+      ],
+      "expo-background-task"
     ],
     "experiments": {
       "typedRoutes": true,

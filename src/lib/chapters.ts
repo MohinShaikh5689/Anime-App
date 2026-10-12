@@ -13,6 +13,8 @@
  * MangaUpdates id; a title search on MangaUpdates is the fallback.
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const MANGADEX = 'https://api.mangadex.org';
 const MANGAUPDATES = 'https://api.mangaupdates.com/v1';
 const PER_PAGE = 100;
@@ -64,9 +66,28 @@ const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
 const MU_TYPE: Record<string, string> = { KR: 'Manhwa', CN: 'Manhua', TW: 'Manhua', JP: 'Manga' };
 
 const seriesIds = new Map<number, Sources>();
+const SOURCES_KEY = 'chapter-sources';
+let sourcesLoaded: Promise<void> | null = null;
+
+/** Matches are saved on the device, so background checks skip the title search. */
+function loadSources() {
+  sourcesLoaded ??= AsyncStorage.getItem(SOURCES_KEY)
+    .then((raw) => {
+      for (const [id, sources] of Object.entries(JSON.parse(raw ?? '{}') as Record<string, Sources>)) {
+        if (!seriesIds.has(Number(id))) seriesIds.set(Number(id), sources);
+      }
+    })
+    .catch(() => {});
+  return sourcesLoaded;
+}
+
+function saveSources() {
+  AsyncStorage.setItem(SOURCES_KEY, JSON.stringify(Object.fromEntries(seriesIds))).catch(() => {});
+}
 
 /** The series on MangaDex and MangaUpdates for an AniList title. */
 async function findSeries(target: ChapterTarget, signal?: AbortSignal): Promise<Sources> {
+  await loadSources();
   const known = seriesIds.get(target.id);
   if (known) return known;
 
@@ -112,6 +133,7 @@ async function findSeries(target: ChapterTarget, signal?: AbortSignal): Promise<
 
   const sources = { mangadex, mangaupdates: found };
   seriesIds.set(target.id, sources);
+  if (mangadex || found != null) saveSources();
   return sources;
 }
 
@@ -154,9 +176,9 @@ async function muLatest(seriesId: number, signal?: AbortSignal) {
   return res.latest_chapter ?? null;
 }
 
-async function mdUploads(mangaId: string, offset: number, signal?: AbortSignal) {
+async function mdUploads(mangaId: string, offset: number, signal?: AbortSignal, limit = MD_PAGE) {
   const res = await json<{ total: number; data: { attributes: { chapter: string | null; publishAt: string } }[] }>(
-    `${MANGADEX}/manga/${mangaId}/feed?limit=${MD_PAGE}&offset=${offset}&order[chapter]=desc&order[publishAt]=asc`,
+    `${MANGADEX}/manga/${mangaId}/feed?limit=${limit}&offset=${offset}&order[chapter]=desc&order[publishAt]=asc`,
     { signal }
   );
   const now = Date.now();
@@ -166,7 +188,7 @@ async function mdUploads(mangaId: string, offset: number, signal?: AbortSignal) 
       .map((c): Dated => ({ chapter: c.attributes.chapter!, at: Date.parse(c.attributes.publishAt) }))
       // Scheduled uploads aren't out yet.
       .filter((c) => c.at <= now),
-    more: offset + MD_PAGE < res.total,
+    more: offset + limit < res.total,
   };
 }
 
@@ -244,6 +266,21 @@ export async function getChapters(target: ChapterTarget, signal?: AbortSignal): 
     latest,
     target.finished
   );
+}
+
+/**
+ * The newest released chapter number, or null when the series can't be found. A
+ * lightweight check (two small requests) for new-chapter alerts.
+ */
+export async function getLatestChapter(target: ChapterTarget, signal?: AbortSignal): Promise<number | null> {
+  const sources = await findSeries(target, signal);
+  const [md, mu] = await Promise.all([
+    sources.mangadex ? mdUploads(sources.mangadex, 0, signal, 20).catch(() => none) : none,
+    sources.mangaupdates != null ? muLatest(sources.mangaupdates, signal).catch(() => null) : null,
+  ]);
+  const numbers = md.items.flatMap((c) => chaptersIn(c.chapter));
+  const latest = Math.max(0, mu ?? 0, ...numbers);
+  return latest > 0 ? latest : null;
 }
 
 /** Loads the next page of older releases from each source that has more. */

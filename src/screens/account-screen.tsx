@@ -31,6 +31,7 @@ import {
 import { readableOn, showAccent, withAlpha } from '@/lib/color';
 import { supabase, useAuth } from '@/lib/supabase';
 import { syncLibrary, useSyncStatus } from '@/lib/sync';
+import { chapterAlertsSupported, syncChapterTask } from '@/lib/chapter-alerts';
 import { type LibraryEntry, useLibrary } from '@/store/library';
 import { useSettings } from '@/store/settings';
 import { Fonts } from '@/theme/fonts';
@@ -291,7 +292,7 @@ export function AccountScreen() {
   );
 }
 
-/** On/off switch for new-episode alerts, with how many are scheduled. */
+/** On/off switch for new episode and chapter alerts, with what they cover. */
 function EpisodeAlertsRow({ accent }: { accent: string }) {
   const { colors } = useAppTheme();
   const enabled = useSettings((s) => s.episodeAlerts);
@@ -302,21 +303,25 @@ function EpisodeAlertsRow({ accent }: { accent: string }) {
       .map((e) => e.id)
       .join(',')
   );
+  const readingCount = useLibrary(
+    (s) => Object.values(s.entries).filter((e) => e.status === 'watching' && isManga(e)).length
+  );
   const [count, setCount] = useState<number | null>(null);
 
   useEffect(() => {
     let live = true;
+    syncChapterTask();
     refreshEpisodeAlerts(true).then(() => scheduledAlertCount().then((n) => live && setCount(n)));
     return () => {
       live = false;
     };
-  }, [enabled, watchingIds]);
+  }, [enabled, watchingIds, readingCount]);
 
   const toggle = async (on: boolean) => {
     if (on && !(await requestAlertPermission())) {
       Alert.alert(
         'Notifications are off',
-        'Allow notifications for this app in Settings to get new-episode alerts.',
+        'Allow notifications for this app in Settings to get new episode and chapter alerts.',
         [
           { text: 'Not Now', style: 'cancel' },
           { text: 'Open Settings', onPress: () => Linking.openSettings() },
@@ -327,13 +332,18 @@ function EpisodeAlertsRow({ accent }: { accent: string }) {
     setEnabled(on);
   };
 
-  const detail = !enabled
-    ? 'Get a notification when a show you’re watching airs'
-    : count == null
+  const episodes =
+    count == null
       ? 'Checking schedules…'
       : count === 0
-        ? 'No upcoming episodes for shows in Watching'
+        ? 'No upcoming episodes in Watching'
         : `${count} upcoming episode${count === 1 ? '' : 's'} scheduled`;
+  const chapters = readingCount
+    ? `${readingCount} series checked for new chapters every few hours`
+    : null;
+  const detail = !enabled
+    ? 'Get notified when an episode airs or a new chapter is out'
+    : [episodes, chapterAlertsSupported ? chapters : null].filter(Boolean).join('\n');
 
   return (
     <View style={styles.row}>
@@ -342,14 +352,14 @@ function EpisodeAlertsRow({ accent }: { accent: string }) {
       </View>
       <View style={styles.rowBody}>
         <View style={styles.rowText}>
-          <Text style={[Type.body, { color: colors.text }]}>New episode alerts</Text>
+          <Text style={[Type.body, { color: colors.text }]}>New episode & chapter alerts</Text>
           <Text style={[Type.footnote, { color: colors.textSecondary }]}>{detail}</Text>
         </View>
         <Switch
           value={enabled}
           onValueChange={toggle}
           trackColor={{ true: accent }}
-          accessibilityLabel="New episode alerts"
+          accessibilityLabel="New episode and chapter alerts"
         />
       </View>
     </View>

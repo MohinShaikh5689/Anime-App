@@ -6,6 +6,8 @@ import { useEffect } from 'react';
 import { Platform, Pressable, StyleSheet, Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+// Defines the new-chapter background task; it must exist before any background launch.
+import '@/lib/chapter-alerts';
 import { useAuth } from '@/lib/supabase';
 import { useLibrary } from '@/store/library';
 import { FONT_ASSETS } from '@/theme/fonts';

@@ -157,7 +157,14 @@ export const UpNextLayout = (props: UpNextProps, environment: WidgetEnvironment)
         <HStack alignment="top">
           {cover(it, 40, 7)}
           <Spacer />
-          <Text modifiers={[font({ size: 15, weight: 'black' }), foregroundStyle('#FFFFFF'), opacity(0.6)]}>続</Text>
+          {/* Only one show fits; say how many more are waiting (medium and large list them). */}
+          {items.length > 1 ? (
+            <Text modifiers={[font({ size: 12, weight: 'bold' }), foregroundStyle('#FFFFFF'), opacity(0.75)]}>
+              {'+' + (items.length - 1) + ' more'}
+            </Text>
+          ) : (
+            <Text modifiers={[font({ size: 15, weight: 'black' }), foregroundStyle('#FFFFFF'), opacity(0.6)]}>続</Text>
+          )}
         </HStack>
         <Spacer />
         <Text modifiers={[font({ size: 15, weight: 'bold' }), foregroundStyle('#FFFFFF'), lineLimit(2)]}>{it.title}</Text>

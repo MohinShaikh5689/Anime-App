@@ -332,7 +332,7 @@ export function AccountScreen() {
 /** Refreshes the Up Next widget and says what it last received. */
 function WidgetRow({ accent }: { accent: string }) {
   const { colors } = useAppTheme();
-  const { at, shows, covers, error } = useWidgetStatus();
+  const { at, shows, error } = useWidgetStatus();
   const [busy, setBusy] = useState(false);
   const status =
     at == null
@@ -341,10 +341,11 @@ function WidgetRow({ accent }: { accent: string }) {
         ? `Widget update failed: ${error}`
         : shows === 0
           ? 'Nothing up next in Watching'
-          : `${shows} show${shows === 1 ? '' : 's'}, ${covers} cover${covers === 1 ? '' : 's'} · ${new Date(at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
-  // Where the app writes; the widget has to read the same group.
-  const group = `${widgetAppGroup ?? 'No app group'}${widgetContainerReachable ? '' : ' (not reachable)'}`;
-  const detail = `${status}\n${group}`;
+          : `${shows} show${shows === 1 ? '' : 's'} · Updated ${new Date(at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+  // The app group only matters when the widget can't share data with the app.
+  const detail = widgetContainerReachable
+    ? status
+    : `${status}\nCan't reach ${widgetAppGroup ?? 'the app group'}`;
   return (
     <Row
       sf="square.grid.2x2.fill"
@@ -551,7 +552,9 @@ function Row({
       accessibilityState={{ disabled: !!disabled, busy: !!busy }}
       android_ripple={{ color: 'rgba(127,127,127,0.18)' }}
       style={({ pressed }) => [styles.row, pressed && isIOS && { backgroundColor: colors.fill }]}>
-      <View style={[styles.rowIcon, { backgroundColor: withAlpha(tint, 0.16) }]}>
+      <View style={styles.rowIcon}>
+        {/* A faded layer rather than withAlpha: system colours (danger) aren't hex and can't be faded. */}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: tint, opacity: 0.16 }]} />
         <Icon sf={sf} md={md} size={17} color={tint} />
       </View>
       <View
@@ -632,7 +635,14 @@ const styles = StyleSheet.create({
   breakdownName: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   group: { paddingVertical: 4 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 14 },
-  rowIcon: { width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  rowIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   rowBody: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, paddingVertical: 10, paddingRight: 16 },
   rowText: { flex: 1, gap: 2 },
   testAlert: { alignSelf: 'flex-start', paddingHorizontal: 4, paddingVertical: 2 },
